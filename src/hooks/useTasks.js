@@ -39,7 +39,14 @@ export function useTasks(filters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [
+    filters.search,
+    filters.status,
+    filters.priority,
+    filters.assignee,
+    filters.userId,
+    filters.role,
+  ]);
 
   /**
    * Create new task

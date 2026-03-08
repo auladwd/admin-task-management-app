@@ -267,52 +267,64 @@ function ReportsContent() {
 
             {/* Task List */}
             <div className="overflow-x-auto">
-              <table className="table table-zebra">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Assignee</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Due Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.tasks?.map(task => (
-                    <tr key={task._id}>
-                      <td>{task.title}</td>
-                      <td>{task.assigneeName}</td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            task.status === 'completed'
-                              ? 'badge-success'
-                              : task.status === 'in_progress'
-                                ? 'badge-info'
-                                : 'badge-warning'
-                          }`}
-                        >
-                          {task.status}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            task.priority === 'high'
-                              ? 'badge-error'
-                              : task.priority === 'medium'
-                                ? 'badge-warning'
-                                : 'badge-info'
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
-                      </td>
-                      <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+              {reportData.tasks?.length === 0 ? (
+                <div className="text-center py-12">
+                  <FiFileText className="mx-auto text-6xl text-base-content/30 mb-4" />
+                  <p className="text-base-content/70">
+                    No tasks found for the selected filters
+                  </p>
+                  <p className="text-sm text-base-content/50 mt-2">
+                    Try adjusting your filter criteria
+                  </p>
+                </div>
+              ) : (
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Assignee</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Due Date</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {reportData.tasks?.map(task => (
+                      <tr key={task._id}>
+                        <td>{task.title}</td>
+                        <td>{task.assigneeName}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              task.status === 'completed'
+                                ? 'badge-success'
+                                : task.status === 'in_progress'
+                                  ? 'badge-info'
+                                  : 'badge-warning'
+                            }`}
+                          >
+                            {task.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              task.priority === 'high'
+                                ? 'badge-error'
+                                : task.priority === 'medium'
+                                  ? 'badge-warning'
+                                  : 'badge-info'
+                            }`}
+                          >
+                            {task.priority}
+                          </span>
+                        </td>
+                        <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

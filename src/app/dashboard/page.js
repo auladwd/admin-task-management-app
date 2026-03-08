@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth/AuthGuard';
 import MainLayout from '@/components/layout/MainLayout';
 import StatCard from '@/components/dashboard/StatCard';
@@ -30,10 +31,16 @@ function DashboardContent() {
   const { userProfile, isSuperAdmin, isTeamLeader, isStaff } = useAuth();
   const { stats, chartData, leaderboard, activity, loading, refresh } =
     useDashboard();
+  const router = useRouter();
 
   if (!userProfile) {
     return <Loading />;
   }
+
+  const handleStatCardClick = status => {
+    // Navigate to tasks page with status filter
+    router.push(`/tasks?status=${status}`);
+  };
 
   return (
     <MainLayout title="Dashboard">
@@ -63,38 +70,60 @@ function DashboardContent() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Tasks"
-            value={stats?.total || 0}
-            description={isStaff() ? 'Assigned to you' : 'All tasks in system'}
-            icon={FiCheckSquare}
-            color="bg-primary"
-            loading={loading}
-          />
-          <StatCard
-            title="Pending"
-            value={stats?.pending || 0}
-            description="Awaiting action"
-            icon={FiClock}
-            color="bg-warning"
-            loading={loading}
-          />
-          <StatCard
-            title="In Progress"
-            value={stats?.inProgress || 0}
-            description="Currently working"
-            icon={FiTrendingUp}
-            color="bg-info"
-            loading={loading}
-          />
-          <StatCard
-            title="Completed"
-            value={stats?.completed || 0}
-            description="Finished tasks"
-            icon={FiCheckCircle}
-            color="bg-success"
-            loading={loading}
-          />
+          <div
+            onClick={() => handleStatCardClick('all')}
+            className="cursor-pointer"
+          >
+            <StatCard
+              title="Total Tasks"
+              value={stats?.total || 0}
+              description={
+                isStaff() ? 'Assigned to you' : 'All tasks in system'
+              }
+              icon={FiCheckSquare}
+              color="bg-primary"
+              loading={loading}
+            />
+          </div>
+          <div
+            onClick={() => handleStatCardClick('pending')}
+            className="cursor-pointer"
+          >
+            <StatCard
+              title="Pending"
+              value={stats?.pending || 0}
+              description="Awaiting action"
+              icon={FiClock}
+              color="bg-warning"
+              loading={loading}
+            />
+          </div>
+          <div
+            onClick={() => handleStatCardClick('in_progress')}
+            className="cursor-pointer"
+          >
+            <StatCard
+              title="In Progress"
+              value={stats?.inProgress || 0}
+              description="Currently working"
+              icon={FiTrendingUp}
+              color="bg-info"
+              loading={loading}
+            />
+          </div>
+          <div
+            onClick={() => handleStatCardClick('completed')}
+            className="cursor-pointer"
+          >
+            <StatCard
+              title="Completed"
+              value={stats?.completed || 0}
+              description="Finished tasks"
+              icon={FiCheckCircle}
+              color="bg-success"
+              loading={loading}
+            />
+          </div>
         </div>
 
         {/* Overdue Alert */}

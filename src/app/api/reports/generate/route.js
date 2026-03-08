@@ -2,35 +2,27 @@ import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 
 /**
- * POST /api/reports/generate
+ * GET /api/reports/generate
  * Generate report based on filters
  */
-export async function POST(request) {
+export async function GET(request) {
   try {
-    const body = await request.json();
-    const { dateRange, status, priority, assignee, startDate, endDate } = body;
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const status = searchParams.get('status');
+    const priority = searchParams.get('priority');
+    const assignee = searchParams.get('assignee');
 
     const db = await getDatabase();
     let filter = {};
 
     // Date range filter
-    if (dateRange === 'custom' && startDate && endDate) {
+    if (startDate && endDate) {
       filter.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };
-    } else if (dateRange === 'last7days') {
-      const date = new Date();
-      date.setDate(date.getDate() - 7);
-      filter.createdAt = { $gte: date };
-    } else if (dateRange === 'last30days') {
-      const date = new Date();
-      date.setDate(date.getDate() - 30);
-      filter.createdAt = { $gte: date };
-    } else if (dateRange === 'last3months') {
-      const date = new Date();
-      date.setMonth(date.getMonth() - 3);
-      filter.createdAt = { $gte: date };
     }
 
     // Status filter
@@ -48,32 +40,77 @@ export async function POST(request) {
       filter.assignee = assignee;
     }
 
-    // Fetch tasks
+    // Fetch tasks with assignee details
     const tasks = await db
       .collection('tasks')
-      .find(filter)
-      .sort({ createdAt: -1 })
+      .aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'assignee',
+            foreignField: 'uid',
+            as: 'assigneeDetails',
+          },
+        },
+        {
+          $addFields: {
+            assigneeName: {
+              $ifNull: [
+                { $arrayElemAt: ['$assigneeDetails.name', 0] },
+                'Unassigned',
+              ],
+            },
+          },
+        },
+        {
+          $project: {
+            assigneeDetails: 0,
+          },
+        },
+        { $sort: { createdAt: -1 } },
+      ])
       .toArray();
 
-    // Calculate statistics
-    const stats = {
-      total: tasks.length,
-      pending: tasks.filter(t => t.status === 'pending').length,
-      inProgress: tasks.filter(t => t.status === 'in_progress').length,
-      completed: tasks.filter(t => t.status === 'completed').length,
-      high: tasks.filter(t => t.priority === 'high').length,
-      medium: tasks.filter(t => t.priority === 'medium').length,
-      low: tasks.filter(t => t.priority === 'low').length,
+    // Calculate summary statistics
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.status === 'completed').length;
+    const inProgressTasks = tasks.filter(
+      t => t.status === 'in_progress',
+    ).length;
+    const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+    const completionRate =
+      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    const summary = {
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      pendingTasks,
+      completionRate,
+      highPriority: tasks.filter(t => t.priority === 'high').length,
+      mediumPriority: tasks.filter(t => t.priority === 'medium').length,
+      lowPriority: tasks.filter(t => t.priority === 'low').length,
       overdue: tasks.filter(
         t => t.status !== 'completed' && new Date(t.dueDate) < new Date(),
       ).length,
     };
 
-    return NextResponse.json({ tasks, stats, filters: body });
+    return NextResponse.json({
+      tasks,
+      summary,
+      filters: {
+        startDate,
+        endDate,
+        status,
+        priority,
+        assignee,
+      },
+    });
   } catch (error) {
     console.error('Generate report error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate report' },
+      { error: 'Failed to generate report', details: error.message },
       { status: 500 },
     );
   }

@@ -282,11 +282,28 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
 
         toast.success('User updated successfully');
       } else {
-        // Create new user
+        // Create new user - First create in Firebase, then in MongoDB
+        const { createUserWithEmailAndPassword } =
+          await import('firebase/auth');
+        const { auth } = await import('@/lib/firebase');
+
+        // Create user in Firebase
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password,
+        );
+
+        // Create user profile in MongoDB
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            uid: userCredential.user.uid,
+            email: formData.email,
+            name: formData.name,
+            role: formData.role,
+          }),
         });
 
         if (!response.ok) {
@@ -300,7 +317,7 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
       onSuccess();
     } catch (error) {
       console.error('Submit user error:', error);
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }

@@ -14,7 +14,7 @@ export default function StatCard({
   loading = false,
 }) {
   return (
-    <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+    <div className="card bg-base-100 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200">
       <div className="card-body">
         <div className="flex items-start justify-between">
           <div className="flex-1">

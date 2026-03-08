@@ -22,9 +22,14 @@ export async function GET(request) {
     // Build filter based on role and parameters
     let filter = {};
 
-    // Role-based filtering
+    // Role-based filtering - staff can only see their own tasks
     if (role === 'staff' && userId) {
       filter.assignee = userId;
+    }
+
+    // Assignee filter (for team_leader and super_admin)
+    if (assignee && assignee !== 'all' && role !== 'staff') {
+      filter.assignee = assignee;
     }
 
     // Status filter
@@ -37,11 +42,6 @@ export async function GET(request) {
       filter.priority = priority;
     }
 
-    // Assignee filter
-    if (assignee && assignee !== 'all') {
-      filter.assignee = assignee;
-    }
-
     // Search filter
     if (search) {
       filter.$or = [
@@ -50,11 +50,15 @@ export async function GET(request) {
       ];
     }
 
+    console.log('Tasks API - Filter:', JSON.stringify(filter));
+
     const tasks = await db
       .collection('tasks')
       .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
+
+    console.log('Tasks API - Found tasks:', tasks.length);
 
     return NextResponse.json({ tasks });
   } catch (error) {

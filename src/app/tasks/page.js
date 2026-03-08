@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
+import { useSearchParams } from 'next/navigation';
 import AuthGuard from '@/components/auth/AuthGuard';
 import MainLayout from '@/components/layout/MainLayout';
 import TaskTable from '@/components/tasks/TaskTable';
@@ -24,6 +25,9 @@ export default function TasksPage() {
 
 function TasksContent() {
   const { userProfile, canManageTasks } = useAuth();
+  const searchParams = useSearchParams();
+  const statusFromUrl = searchParams.get('status');
+
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -52,6 +56,22 @@ function TasksContent() {
       }));
     }
   }, [userProfile]);
+
+  // Apply status filter from URL and fetch tasks
+  useEffect(() => {
+    if (statusFromUrl && userProfile) {
+      const newStatus = statusFromUrl === 'all' ? 'all' : statusFromUrl;
+      setFilters(prev => {
+        const updated = {
+          ...prev,
+          status: newStatus,
+          userId: userProfile.uid,
+          role: userProfile.role,
+        };
+        return updated;
+      });
+    }
+  }, [statusFromUrl, userProfile]);
 
   // Fetch staff users for assignment
   useEffect(() => {
@@ -109,12 +129,25 @@ function TasksContent() {
     fetchTasks();
   };
 
+  // Get status label for display
+  const getStatusLabel = status => {
+    const labels = {
+      all: 'All Tasks',
+      pending: 'Pending Tasks',
+      in_progress: 'In Progress Tasks',
+      completed: 'Completed Tasks',
+    };
+    return labels[status] || 'Tasks';
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Tasks</h1>
+          <h1 className="text-3xl font-bold">
+            {getStatusLabel(filters.status)}
+          </h1>
           <p className="text-base-content/70 mt-1">
             {canManageTasks()
               ? 'Manage and assign tasks to team members'
