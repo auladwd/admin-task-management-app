@@ -104,15 +104,16 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-3 left-3 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="btn btn-circle btn-primary"
+          className="btn btn-circle btn-primary shadow-lg"
+          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         >
           {isMobileMenuOpen ? (
-            <FiX className="w-6 h-6" />
+            <FiX className="w-5 h-5" />
           ) : (
-            <FiMenu className="w-6 h-6" />
+            <FiMenu className="w-5 h-5" />
           )}
         </button>
       </div>
@@ -120,15 +121,18 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div
         className={`
-          fixed lg:sticky top-0 left-0 h-screen w-64 bg-base-200 
-          flex flex-col z-40 transition-transform duration-300
+          fixed lg:sticky top-0 left-0 h-screen w-72 sm:w-80 lg:w-64 bg-base-200 
+          flex flex-col z-40 transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          shadow-xl lg:shadow-none
         `}
       >
         {/* Logo/Brand */}
-        <div className="p-6 border-b border-base-300">
-          <h1 className="text-2xl font-bold text-primary">Task Manager</h1>
-          <p className="text-sm text-base-content/70 mt-1">
+        <div className="p-4 sm:p-6 border-b border-base-300">
+          <h1 className="text-xl sm:text-2xl font-bold text-primary">
+            Task Manager
+          </h1>
+          <p className="text-xs sm:text-sm text-base-content/70 mt-1">
             {userProfile?.role === 'super_admin' && 'Super Admin'}
             {userProfile?.role === 'team_leader' && 'Team Leader'}
             {userProfile?.role === 'staff' && 'Staff Member'}
@@ -136,24 +140,26 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="menu menu-lg gap-2">
+        <nav className="flex-1 overflow-y-auto p-3 sm:p-4">
+          <ul className="menu menu-md sm:menu-lg gap-1 sm:gap-2">
             <NavLinks />
           </ul>
         </nav>
 
         {/* User Profile Section */}
-        <div className="p-4 border-t border-base-300">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="p-3 sm:p-4 border-t border-base-300">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div className="avatar placeholder">
-              <div className="bg-primary text-primary-content rounded-full w-10">
-                <span className="text-lg">
+              <div className="bg-primary text-primary-content rounded-full w-10 sm:w-12">
+                <span className="text-base sm:text-lg">
                   {userProfile?.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">{userProfile?.name}</p>
+              <p className="font-semibold truncate text-sm sm:text-base">
+                {userProfile?.name}
+              </p>
               <p className="text-xs text-base-content/70 truncate">
                 {userProfile?.email}
               </p>
@@ -165,10 +171,10 @@ export default function Sidebar() {
             <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="btn btn-ghost btn-sm flex-1"
+              className="btn btn-ghost btn-sm flex-1 text-xs sm:text-sm"
               title="Logout"
             >
-              <FiLogOut className="w-4 h-4" />
+              <FiLogOut className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Logout</span>
             </button>
           </div>
@@ -178,8 +184,9 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
     </>

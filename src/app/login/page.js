@@ -130,16 +130,16 @@ function LoginForm() {
           </form>
 
           {/* Register Link */}
-          <div className="divider">OR</div>
+          {/* <div className="divider">OR</div> */}
           <div className="text-center">
             <p className="text-sm text-base-content/70">
-              Don't have an account?{' '}
-              <Link
+              {/* Don't have an account?{' '} */}
+              {/* <Link
                 href="/register"
                 className="link link-primary font-semibold"
               >
                 Register here
-              </Link>
+              </Link> */}
             </p>
           </div>
         </div>

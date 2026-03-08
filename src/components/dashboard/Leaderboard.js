@@ -3,13 +3,14 @@
 /**
  * Performance Leaderboard Component
  * Shows top performing staff members
+ * Mobile-first responsive design
  */
 export default function Leaderboard({ data, loading = false }) {
   if (loading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="skeleton h-16 w-full"></div>
+          <div key={i} className="skeleton h-20 sm:h-16 w-full"></div>
         ))}
       </div>
     );
@@ -17,9 +18,11 @@ export default function Leaderboard({ data, loading = false }) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-base-content/70">No performance data available</p>
-        <p className="text-sm text-base-content/50 mt-2">
+      <div className="text-center py-6 sm:py-8 px-4">
+        <p className="text-base-content/70 text-sm sm:text-base">
+          No performance data available
+        </p>
+        <p className="text-xs sm:text-sm text-base-content/50 mt-2">
           Complete tasks to appear on the leaderboard
         </p>
       </div>
@@ -30,25 +33,25 @@ export default function Leaderboard({ data, loading = false }) {
     switch (rank) {
       case 1:
         return (
-          <div className="w-10 h-10 rounded-full bg-warning flex items-center justify-center">
-            <span className="text-2xl">🏆</span>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-warning flex items-center justify-center">
+            <span className="text-xl sm:text-2xl">🏆</span>
           </div>
         );
       case 2:
         return (
-          <div className="w-10 h-10 rounded-full bg-base-300 flex items-center justify-center">
-            <span className="text-2xl">🥈</span>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-base-300 flex items-center justify-center">
+            <span className="text-xl sm:text-2xl">🥈</span>
           </div>
         );
       case 3:
         return (
-          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
-            <span className="text-2xl">🥉</span>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center">
+            <span className="text-xl sm:text-2xl">🥉</span>
           </div>
         );
       default:
         return (
-          <span className="text-lg font-bold text-base-content/70">
+          <span className="text-base sm:text-lg font-bold text-base-content/70">
             #{rank}
           </span>
         );
@@ -63,31 +66,42 @@ export default function Leaderboard({ data, loading = false }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {data.slice(0, 10).map(item => (
         <div
           key={item.userId}
           className={`
-            flex items-center gap-4 p-4 rounded-lg
+            flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg
             ${item.rank <= 3 ? 'bg-base-200' : 'bg-base-100'}
-            hover:bg-base-200 transition-colors
+            hover:bg-base-200 transition-colors active:scale-[0.98]
           `}
         >
           {/* Rank */}
-          <div className="flex-shrink-0 w-12 flex justify-center">
+          <div className="flex-shrink-0 w-10 sm:w-12 flex justify-center">
             {getRankIcon(item.rank)}
           </div>
 
           {/* User Info */}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate">{item.name}</p>
-            <p className="text-sm text-base-content/70 truncate">
+            <p className="font-semibold truncate text-sm sm:text-base">
+              {item.name}
+            </p>
+            <p className="text-xs sm:text-sm text-base-content/70 truncate">
               {item.email}
             </p>
+            {/* Mobile: Show stats inline */}
+            <div className="flex gap-3 mt-1 text-xs sm:hidden">
+              <span className="text-base-content/70">
+                {item.completed}/{item.assigned} tasks
+              </span>
+              <span className="text-base-content/70">
+                {item.completedOnTime} on time
+              </span>
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="hidden md:flex gap-4 text-sm">
+          {/* Stats - Hidden on mobile, shown on tablet+ */}
+          <div className="hidden sm:flex gap-3 md:gap-4 text-xs sm:text-sm">
             <div className="text-center">
               <p className="text-base-content/70">Tasks</p>
               <p className="font-semibold">
@@ -103,7 +117,9 @@ export default function Leaderboard({ data, loading = false }) {
           {/* Score */}
           <div className="flex-shrink-0">
             <div className="text-center">
-              <p className={`text-2xl font-bold ${getScoreColor(item.score)}`}>
+              <p
+                className={`text-xl sm:text-2xl font-bold ${getScoreColor(item.score)}`}
+              >
                 {item.score.toFixed(0)}
               </p>
               <p className="text-xs text-base-content/70">Score</p>

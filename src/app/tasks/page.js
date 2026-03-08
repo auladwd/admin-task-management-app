@@ -151,34 +151,40 @@ function TasksContent() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-5 md:space-y-6 max-w-7xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold truncate">
             {getStatusLabel(filters.status)}
           </h1>
-          <p className="text-base-content/70 mt-1">
+          <p className="text-xs sm:text-sm text-base-content/70 mt-1">
             {canManageTasks()
               ? 'Manage and assign tasks to team members'
               : 'View and update your assigned tasks'}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={fetchTasks}
-            className="btn btn-ghost"
+            className="btn btn-ghost btn-sm sm:btn-md flex-1 sm:flex-initial"
             disabled={loading}
           >
-            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-            Refresh
+            <FiRefreshCw
+              className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+            />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
 
           {canManageTasks() && (
-            <button onClick={handleCreateTask} className="btn btn-primary">
-              <FiPlus />
-              Create Task
+            <button
+              onClick={handleCreateTask}
+              className="btn btn-primary btn-sm sm:btn-md flex-1 sm:flex-initial"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Create Task</span>
+              <span className="sm:hidden">New</span>
             </button>
           )}
         </div>
@@ -194,7 +200,7 @@ function TasksContent() {
 
       {/* Task Table */}
       <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
+        <div className="card-body p-3 sm:p-4 md:p-6">
           <TaskTable
             tasks={tasks}
             onEdit={handleEditTask}
