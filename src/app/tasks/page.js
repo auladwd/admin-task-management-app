@@ -27,6 +27,7 @@ function TasksContent() {
   const { userProfile, canManageTasks } = useAuth();
   const searchParams = useSearchParams();
   const statusFromUrl = searchParams.get('status');
+  const actionFromUrl = searchParams.get('action');
 
   const [filters, setFilters] = useState({
     search: '',
@@ -72,6 +73,15 @@ function TasksContent() {
       });
     }
   }, [statusFromUrl, userProfile]);
+
+  // Handle action from URL (e.g., action=create)
+  useEffect(() => {
+    if (actionFromUrl === 'create' && canManageTasks() && userProfile) {
+      setIsCreateModalOpen(true);
+      // Clear the action parameter from URL
+      window.history.replaceState({}, '', '/tasks');
+    }
+  }, [actionFromUrl, canManageTasks, userProfile]);
 
   // Fetch staff users for assignment
   useEffect(() => {

@@ -282,25 +282,13 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
 
         toast.success('User updated successfully');
       } else {
-        // Create new user - First create in Firebase, then in MongoDB
-        const { createUserWithEmailAndPassword } =
-          await import('firebase/auth');
-        const { auth } = await import('@/lib/firebase');
-
-        // Create user in Firebase
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          formData.email,
-          formData.password,
-        );
-
-        // Create user profile in MongoDB
-        const response = await fetch('/api/auth/register', {
+        // Create new user using Admin API (doesn't affect current session)
+        const response = await fetch('/api/users/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            uid: userCredential.user.uid,
             email: formData.email,
+            password: formData.password,
             name: formData.name,
             role: formData.role,
           }),

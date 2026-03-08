@@ -208,10 +208,30 @@ function DashboardContent() {
             <div className="card-body">
               <h3 className="card-title">Quick Actions</h3>
               <div className="flex flex-wrap gap-3 mt-4">
-                <button className="btn btn-primary">Create New Task</button>
-                <button className="btn btn-outline">Assign Tasks</button>
-                <button className="btn btn-outline">View Reports</button>
-                <button className="btn btn-outline">Manage Users</button>
+                <button
+                  onClick={() => router.push('/tasks?action=create')}
+                  className="btn btn-primary"
+                >
+                  Create New Task
+                </button>
+                <button
+                  onClick={() => router.push('/tasks')}
+                  className="btn btn-outline"
+                >
+                  Assign Tasks
+                </button>
+                <button
+                  onClick={() => router.push('/reports')}
+                  className="btn btn-outline"
+                >
+                  View Reports
+                </button>
+                <button
+                  onClick={() => router.push('/users')}
+                  className="btn btn-outline"
+                >
+                  Manage Users
+                </button>
               </div>
             </div>
           </div>
