@@ -98,7 +98,7 @@ function ReportsContent() {
       return;
     }
     try {
-      exportToExcel(reportData.tasks, 'task-report');
+      exportToExcel(reportData, appliedFilters, userProfile?.name);
       toast.success('Report exported to Excel');
     } catch (error) {
       console.error(error);
@@ -118,7 +118,7 @@ function ReportsContent() {
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-7xl">
       {/* ── Hidden Print Area ── rendered in DOM, visible only on print ── */}
       {reportData && (
-        <div id="print-report" style={{ display: 'none' }}>
+        <div id="print-report" aria-hidden="true">
           {/* Header */}
           <div className="print-header">
             <div>
