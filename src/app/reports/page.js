@@ -461,7 +461,7 @@ function ReportsContent() {
                           <td className="text-base-content/40 font-mono text-xs">
                             {idx + 1}
                           </td>
-                          <td className="font-semibold max-w-[200px] truncate">
+                          <td className="font-semibold text-wrap text-justify max-w-[500px] truncate">
                             {task.title}
                           </td>
                           <td>{task.assigneeName}</td>
@@ -482,7 +482,7 @@ function ReportsContent() {
                           <td className="whitespace-nowrap">
                             {new Date(task.dueDate).toLocaleDateString()}
                           </td>
-                          <td className="max-w-[220px] text-xs text-base-content/60 truncate">
+                          <td className="max-w-[20px] text-xs text-base-content/60 truncate">
                             {task.description}
                           </td>
                         </tr>
