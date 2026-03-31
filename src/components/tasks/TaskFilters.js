@@ -28,7 +28,7 @@ export default function TaskFilters({
               </span>
               <input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="    Search Task ...."
                 className="input input-bordered input-sm sm:input-md w-full pl-10 text-sm"
                 value={filters.search || ''}
                 onChange={e =>
