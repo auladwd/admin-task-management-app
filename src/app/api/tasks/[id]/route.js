@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { createActivityLog } from '@/lib/dbHelpers';
+import { createNotification } from '@/lib/notificationHelpers';
 
 /**
  * GET /api/tasks/[id]
@@ -107,6 +108,55 @@ export async function PUT(request, { params }) {
         newStatus: body.status,
       },
     });
+
+    // --- Notifications ---
+    const updatedBy = body.updatedBy || currentTask.createdBy;
+    const updatedByName = body.updatedByName || currentTask.createdByName;
+
+    // Status changed: notify the task creator (if different from updater)
+    if (body.status && body.status !== currentTask.status) {
+      const statusLabels = {
+        pending: 'Pending',
+        in_progress: 'In Progress',
+        completed: 'Completed',
+      };
+
+      // Notify creator when staff updates status
+      if (updatedBy !== currentTask.createdBy) {
+        await createNotification({
+          userId: currentTask.createdBy,
+          title: 'Task Status Updated',
+          message: `${updatedByName} changed "${currentTask.title}" to ${statusLabels[body.status] || body.status}`,
+          type: 'status_changed',
+          taskId: id,
+          taskTitle: currentTask.title,
+        });
+      }
+
+      // Notify assignee when team leader changes status (if different from updater)
+      if (updatedBy !== currentTask.assignee && currentTask.assignee) {
+        await createNotification({
+          userId: currentTask.assignee,
+          title: 'Task Status Updated',
+          message: `"${currentTask.title}" status changed to ${statusLabels[body.status] || body.status}`,
+          type: 'status_changed',
+          taskId: id,
+          taskTitle: currentTask.title,
+        });
+      }
+    }
+
+    // Task reassigned: notify new assignee
+    if (body.assignee && body.assignee !== currentTask.assignee) {
+      await createNotification({
+        userId: body.assignee,
+        title: 'Task Assigned to You',
+        message: `${updatedByName} assigned you the task: "${currentTask.title}"`,
+        type: 'task_assigned',
+        taskId: id,
+        taskTitle: currentTask.title,
+      });
+    }
 
     return NextResponse.json({ message: 'Task updated successfully' });
   } catch (error) {

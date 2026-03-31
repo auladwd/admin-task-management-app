@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { createActivityLog } from '@/lib/dbHelpers';
+import { createNotification } from '@/lib/notificationHelpers';
 
 /**
  * GET /api/tasks
@@ -50,15 +51,11 @@ export async function GET(request) {
       ];
     }
 
-    console.log('Tasks API - Filter:', JSON.stringify(filter));
-
     const tasks = await db
       .collection('tasks')
       .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
-
-    console.log('Tasks API - Found tasks:', tasks.length);
 
     return NextResponse.json({ tasks });
   } catch (error) {
@@ -133,18 +130,23 @@ export async function POST(request) {
       taskId: result.insertedId.toString(),
       taskTitle: title,
       description: `created task "${title}"`,
-      metadata: {
-        assignee: assigneeName,
-        priority,
-        dueDate,
-      },
+      metadata: { assignee: assigneeName, priority, dueDate },
     });
 
+    // Notify the assigned staff member (only if assigning to someone else)
+    if (assignee !== createdBy) {
+      await createNotification({
+        userId: assignee,
+        title: 'New Task Assigned',
+        message: `${createdByName} assigned you a new task: "${title}"`,
+        type: 'task_assigned',
+        taskId: result.insertedId.toString(),
+        taskTitle: title,
+      });
+    }
+
     return NextResponse.json(
-      {
-        message: 'Task created successfully',
-        taskId: result.insertedId,
-      },
+      { message: 'Task created successfully', taskId: result.insertedId },
       { status: 201 },
     );
   } catch (error) {
