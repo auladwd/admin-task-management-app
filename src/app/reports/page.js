@@ -3,45 +3,50 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import AuthGuard from '@/components/auth/AuthGuard';
-import RoleGuard from '@/components/auth/RoleGuard';
 import MainLayout from '@/components/layout/MainLayout';
-import { FiDownload, FiPrinter, FiFileText } from 'react-icons/fi';
+import { FiDownload, FiPrinter, FiFileText, FiUser } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { exportToPDF, exportToExcel } from '@/utils/exportHelpers';
 
 export default function ReportsPage() {
   return (
     <AuthGuard>
-      <RoleGuard allowedRoles={['super_admin', 'team_leader']}>
-        <MainLayout>
-          <ReportsContent />
-        </MainLayout>
-      </RoleGuard>
+      <MainLayout>
+        <ReportsContent />
+      </MainLayout>
     </AuthGuard>
   );
 }
 
 /** Format status/priority label */
 function fmtStatus(s) {
+  if (!s) return '';
   return s === 'in_progress'
     ? 'In Progress'
     : s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 /** Active filter summary string */
-function filterSummary(filters) {
+function filterSummary(filters, isStaff, staffName) {
   const parts = [];
-  if (filters.startDate) parts.push(`From: ${filters.startDate}`);
-  if (filters.endDate) parts.push(`To: ${filters.endDate}`);
-  if (filters.status !== 'all')
+  if (isStaff) parts.push(`Staff: ${staffName}`);
+  if (filters?.startDate) parts.push(`From: ${filters.startDate}`);
+  if (filters?.endDate) parts.push(`To: ${filters.endDate}`);
+  if (filters?.status && filters.status !== 'all')
     parts.push(`Status: ${fmtStatus(filters.status)}`);
-  if (filters.priority !== 'all')
+  if (filters?.priority && filters.priority !== 'all')
     parts.push(`Priority: ${fmtStatus(filters.priority)}`);
-  return parts.length ? parts.join('  |  ') : 'All tasks';
+  return parts.length
+    ? parts.join('  |  ')
+    : isStaff
+      ? `All tasks for ${staffName}`
+      : 'All tasks';
 }
 
 function ReportsContent() {
-  const { userProfile } = useAuth();
+  const { userProfile, isStaff } = useAuth();
+  const staffMode = isStaff();
+
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [appliedFilters, setAppliedFilters] = useState(null);
@@ -50,18 +55,21 @@ function ReportsContent() {
     endDate: '',
     status: 'all',
     priority: 'all',
-    assignee: 'all',
   });
 
   const handleGenerateReport = async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
-      Object.keys(filters).forEach(key => {
-        if (filters[key] && filters[key] !== 'all') {
-          queryParams.append(key, filters[key]);
-        }
+
+      // Always send userId + role so API can enforce access control
+      queryParams.append('userId', userProfile.uid);
+      queryParams.append('role', userProfile.role);
+
+      Object.entries(filters).forEach(([key, val]) => {
+        if (val && val !== 'all') queryParams.append(key, val);
       });
+
       const response = await fetch(
         `/api/reports/generate?${queryParams.toString()}`,
       );
@@ -75,20 +83,6 @@ function ReportsContent() {
       toast.error('Failed to generate report');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleExportPDF = () => {
-    if (!reportData) {
-      toast.error('Please generate a report first');
-      return;
-    }
-    try {
-      exportToPDF(reportData, 'task-report');
-      toast.success('Report exported to PDF');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to export PDF');
     }
   };
 
@@ -106,6 +100,20 @@ function ReportsContent() {
     }
   };
 
+  const handleExportPDF = () => {
+    if (!reportData) {
+      toast.error('Please generate a report first');
+      return;
+    }
+    try {
+      exportToPDF(reportData, 'task-report');
+      toast.success('Report exported to PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to export PDF');
+    }
+  };
+
   const handlePrint = () => {
     if (!reportData) {
       toast.error('Please generate a report first');
@@ -114,17 +122,18 @@ function ReportsContent() {
     window.print();
   };
 
+  const summary = reportData?.summary || {};
+
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-7xl">
-      {/* ── Hidden Print Area ── rendered in DOM, visible only on print ── */}
+      {/* ── Hidden Print Area ── */}
       {reportData && (
         <div id="print-report" aria-hidden="true">
-          {/* Header */}
           <div className="print-header">
             <div>
               <h1>Task Management Report</h1>
               <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>
-                {filterSummary(appliedFilters)}
+                {filterSummary(appliedFilters, staffMode, userProfile?.name)}
               </div>
             </div>
             <div className="print-meta">
@@ -136,35 +145,31 @@ function ReportsContent() {
             </div>
           </div>
 
-          {/* Summary Stats */}
           <div className="print-stats">
             <div className="print-stat-box">
               <div className="stat-label">Total Tasks</div>
-              <div className="stat-value total">
-                {reportData.summary?.totalTasks || 0}
-              </div>
+              <div className="stat-value total">{summary.totalTasks || 0}</div>
             </div>
             <div className="print-stat-box">
               <div className="stat-label">Completed</div>
               <div className="stat-value done">
-                {reportData.summary?.completedTasks || 0}
+                {summary.completedTasks || 0}
               </div>
             </div>
             <div className="print-stat-box">
               <div className="stat-label">In Progress</div>
               <div className="stat-value progress">
-                {reportData.summary?.inProgressTasks || 0}
+                {summary.inProgressTasks || 0}
               </div>
             </div>
             <div className="print-stat-box">
               <div className="stat-label">Completion Rate</div>
               <div className="stat-value rate">
-                {reportData.summary?.completionRate || 0}%
+                {summary.completionRate || 0}%
               </div>
             </div>
           </div>
 
-          {/* Task Table */}
           {reportData.tasks?.length === 0 ? (
             <p
               style={{
@@ -181,12 +186,12 @@ function ReportsContent() {
                 <thead>
                   <tr>
                     <th style={{ width: '4%' }}>#</th>
-                    <th style={{ width: '28%' }}>Task Title</th>
-                    <th style={{ width: '16%' }}>Assignee</th>
+                    <th style={{ width: '26%' }}>Task Title</th>
+                    {!staffMode && <th style={{ width: '14%' }}>Assignee</th>}
                     <th style={{ width: '12%' }}>Status</th>
                     <th style={{ width: '10%' }}>Priority</th>
                     <th style={{ width: '12%' }}>Due Date</th>
-                    <th style={{ width: '18%' }}>Description</th>
+                    <th>Description</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -194,7 +199,7 @@ function ReportsContent() {
                     <tr key={task._id}>
                       <td style={{ color: '#6b7280' }}>{idx + 1}</td>
                       <td style={{ fontWeight: 600 }}>{task.title}</td>
-                      <td>{task.assigneeName}</td>
+                      {!staffMode && <td>{task.assigneeName}</td>}
                       <td>
                         <span className={`print-badge badge-${task.status}`}>
                           {fmtStatus(task.status)}
@@ -216,7 +221,6 @@ function ReportsContent() {
                   ))}
                 </tbody>
               </table>
-
               <div className="print-footer">
                 <span>Task Management System — Confidential</span>
                 <span>
@@ -231,19 +235,39 @@ function ReportsContent() {
 
       {/* ── Screen UI ── */}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Reports</h1>
-        <p className="text-base-content/70 mt-1 text-sm sm:text-base">
-          Generate and export task reports
-        </p>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Reports</h1>
+          <p className="text-base-content/70 mt-1 text-sm sm:text-base">
+            {staffMode
+              ? 'Generate and export your personal task report'
+              : 'Generate and export task reports'}
+          </p>
+        </div>
+        {/* Staff badge */}
+        {staffMode && (
+          <div className="flex items-center gap-2 badge badge-primary badge-lg py-3 px-4">
+            <FiUser className="w-4 h-4" />
+            <span className="text-sm font-medium">{userProfile?.name}</span>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body p-4 sm:p-6">
           <h2 className="card-title text-base sm:text-lg">Report Filters</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {/* Staff notice */}
+          {staffMode && (
+            <div className="alert alert-info py-2 px-4 text-sm">
+              <FiUser className="w-4 h-4 flex-shrink-0" />
+              <span>This report will only include tasks assigned to you.</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Start Date</span>
@@ -305,6 +329,7 @@ function ReportsContent() {
               </select>
             </div>
           </div>
+
           <div className="card-actions justify-end mt-4">
             <button
               onClick={handleGenerateReport}
@@ -334,7 +359,11 @@ function ReportsContent() {
                 </h2>
                 {appliedFilters && (
                   <p className="text-xs text-base-content/50 mt-1">
-                    {filterSummary(appliedFilters)}
+                    {filterSummary(
+                      appliedFilters,
+                      staffMode,
+                      userProfile?.name,
+                    )}
                   </p>
                 )}
               </div>
@@ -362,32 +391,66 @@ function ReportsContent() {
 
             {/* Summary Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-              <div className="stat bg-base-200 rounded-xl p-3 sm:p-4">
-                <div className="stat-title text-xs sm:text-sm">Total Tasks</div>
-                <div className="stat-value text-primary text-2xl sm:text-3xl">
-                  {reportData.summary?.totalTasks || 0}
+              {[
+                {
+                  label: 'Total Tasks',
+                  value: summary.totalTasks || 0,
+                  cls: 'text-primary',
+                },
+                {
+                  label: 'Completed',
+                  value: summary.completedTasks || 0,
+                  cls: 'text-success',
+                },
+                {
+                  label: 'In Progress',
+                  value: summary.inProgressTasks || 0,
+                  cls: 'text-info',
+                },
+                {
+                  label: 'Completion Rate',
+                  value: `${summary.completionRate || 0}%`,
+                  cls: 'text-accent',
+                },
+              ].map(({ label, value, cls }) => (
+                <div
+                  key={label}
+                  className="stat bg-base-200 rounded-xl p-3 sm:p-4"
+                >
+                  <div className="stat-title text-xs sm:text-sm">{label}</div>
+                  <div className={`stat-value text-2xl sm:text-3xl ${cls}`}>
+                    {value}
+                  </div>
                 </div>
-              </div>
-              <div className="stat bg-base-200 rounded-xl p-3 sm:p-4">
-                <div className="stat-title text-xs sm:text-sm">Completed</div>
-                <div className="stat-value text-success text-2xl sm:text-3xl">
-                  {reportData.summary?.completedTasks || 0}
+              ))}
+            </div>
+
+            {/* Extra stats row */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {[
+                {
+                  label: 'Pending',
+                  value: summary.pendingTasks || 0,
+                  cls: 'text-warning',
+                },
+                {
+                  label: 'Overdue',
+                  value: summary.overdueTasks || 0,
+                  cls: 'text-error',
+                },
+                {
+                  label: 'High Priority',
+                  value: summary.highPriority || 0,
+                  cls: 'text-error',
+                },
+              ].map(({ label, value, cls }) => (
+                <div key={label} className="stat bg-base-200 rounded-xl p-3">
+                  <div className="stat-title text-xs">{label}</div>
+                  <div className={`stat-value text-xl sm:text-2xl ${cls}`}>
+                    {value}
+                  </div>
                 </div>
-              </div>
-              <div className="stat bg-base-200 rounded-xl p-3 sm:p-4">
-                <div className="stat-title text-xs sm:text-sm">In Progress</div>
-                <div className="stat-value text-info text-2xl sm:text-3xl">
-                  {reportData.summary?.inProgressTasks || 0}
-                </div>
-              </div>
-              <div className="stat bg-base-200 rounded-xl p-3 sm:p-4">
-                <div className="stat-title text-xs sm:text-sm">
-                  Completion Rate
-                </div>
-                <div className="stat-value text-accent text-2xl sm:text-3xl">
-                  {reportData.summary?.completionRate || 0}%
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Task List */}
@@ -432,7 +495,7 @@ function ReportsContent() {
                         {task.description}
                       </p>
                       <div className="flex justify-between text-xs text-base-content/60">
-                        <span>{task.assigneeName}</span>
+                        {!staffMode && <span>{task.assigneeName}</span>}
                         <span>
                           {new Date(task.dueDate).toLocaleDateString()}
                         </span>
@@ -448,7 +511,7 @@ function ReportsContent() {
                       <tr>
                         <th className="w-8">#</th>
                         <th>Title</th>
-                        <th>Assignee</th>
+                        {!staffMode && <th>Assignee</th>}
                         <th>Status</th>
                         <th>Priority</th>
                         <th>Due Date</th>
@@ -461,10 +524,10 @@ function ReportsContent() {
                           <td className="text-base-content/40 font-mono text-xs">
                             {idx + 1}
                           </td>
-                          <td className="font-semibold text-wrap text-justify max-w-[500px] truncate">
+                          <td className="font-semibold max-w-[220px] truncate">
                             {task.title}
                           </td>
-                          <td>{task.assigneeName}</td>
+                          {!staffMode && <td>{task.assigneeName}</td>}
                           <td>
                             <span
                               className={`badge badge-sm ${task.status === 'completed' ? 'badge-success' : task.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}
@@ -482,7 +545,7 @@ function ReportsContent() {
                           <td className="whitespace-nowrap">
                             {new Date(task.dueDate).toLocaleDateString()}
                           </td>
-                          <td className="max-w-[20px] text-xs text-base-content/60 truncate">
+                          <td className="max-w-[240px] text-xs text-base-content/60 truncate">
                             {task.description}
                           </td>
                         </tr>

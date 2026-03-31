@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import DeveloperModal from '@/components/common/DeveloperModal';
 import {
   FiHome,
   FiCheckSquare,
@@ -14,6 +15,7 @@ import {
   FiMenu,
   FiX,
   FiLogOut,
+  FiInfo,
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
@@ -27,6 +29,7 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDevModalOpen, setIsDevModalOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -69,7 +72,7 @@ export default function Sidebar() {
         name: 'Reports',
         href: '/reports',
         icon: FiFileText,
-        roles: ['super_admin', 'team_leader'],
+        roles: ['super_admin', 'team_leader', 'staff'],
       },
     ];
 
@@ -98,6 +101,20 @@ export default function Sidebar() {
           </li>
         );
       })}
+
+      {/* Developer Info — always visible, same style as nav items */}
+      <li>
+        <button
+          onClick={() => {
+            setIsDevModalOpen(true);
+            setIsMobileMenuOpen(false);
+          }}
+          className="flex items-center gap-3 w-full text-left text-ellipsis hover:bg-secondary/10"
+        >
+          <FiInfo className="w-5 h-5" />
+          <span>Developer Info</span>
+        </button>
+      </li>
     </>
   );
 
@@ -167,11 +184,11 @@ export default function Sidebar() {
           </div>
 
           {/* Theme Toggle & Logout */}
-          <div className="flex gap-2">
-            <ThemeToggle />
+          <div className="flex justify-center items-center gap-1 pb-10">
+            {/* <ThemeToggle /> */}
             <button
               onClick={handleLogout}
-              className="btn btn-ghost btn-sm flex-1 text-xs sm:text-sm"
+              className="btn btn-ghost btn-sm flex-1 text-xs sm:text-sm bg-red-500 hover:bg-red-600 text-white"
               title="Logout"
             >
               <FiLogOut className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -189,6 +206,12 @@ export default function Sidebar() {
           aria-hidden="true"
         />
       )}
+
+      {/* Developer Modal */}
+      <DeveloperModal
+        isOpen={isDevModalOpen}
+        onClose={() => setIsDevModalOpen(false)}
+      />
     </>
   );
 }
