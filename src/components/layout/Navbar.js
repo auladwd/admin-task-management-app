@@ -77,12 +77,41 @@ export default function Navbar({ title = 'Dashboard' }) {
   };
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-300 px-3 py-4 sm:px-4 md:px-6 py-3 sm:py-4 md:py-7 min-h-0">
-      {/* Page Title */}
-      <div className="flex-1 min-w-0 pl-12 lg:pl-0">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold truncate">
-          {title}
-        </h2>
+    <div className="navbar bg-base-100 border-b border-base-300 px-3 sm:px-4 md:px-6 py-2 sm:py-3 lg:py-7">
+      {/* ── Center: Logo + Organisation Name ── */}
+      <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 min-w-0 overflow-hidden pl-12 lg:pl-0">
+        {/* Logo */}
+        <div className="flex-shrink-0">
+          <img
+            src="/org-logo.png"
+            alt="Bangladesh Election Commission"
+            className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain"
+            onError={e => {
+              e.currentTarget.src = '/org-logo.svg';
+              e.currentTarget.onerror = null;
+            }}
+          />
+        </div>
+
+        {/* Organisation Text */}
+        <div className="min-w-0 hidden xs:block">
+          <p className="text-xs sm:text-sm md:text-lg font-bold text-primary leading-tight truncate">
+            IDEA PROJECT (2nd Phase)
+          </p>
+          <p className="text-[10px] sm:text-xs md:text-base font-medium text-base-content/70 leading-tight truncate">
+            Bangladesh Election Commission
+          </p>
+        </div>
+
+        {/* Mobile: only show on very small screens as compact text */}
+        <div className="min-w-0 block xs:hidden">
+          <p className="text-[10px] font-bold text-primary leading-tight truncate">
+            IDEA PROJECT (2nd Phase)
+          </p>
+          <p className="text-[9px] text-base-content/60 leading-tight truncate">
+            Bangladesh Election Commission
+          </p>
+        </div>
       </div>
 
       {/* Right Side Actions */}

@@ -11,6 +11,12 @@ const inter = Inter({ subsets: ['latin'] });
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <title>Task Manager</title>
+        <meta name="description" content="Team task management application" />
+      </head>
       <body className={inter.className}>
         <AppProviders>
           {children}
