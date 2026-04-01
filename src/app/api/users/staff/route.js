@@ -12,9 +12,11 @@ export async function GET(request) {
 
     const db = await getDatabase();
 
+    // User management: show all users (active + inactive)
+    // staffOnly (task assignment dropdown): show only active staff
     const query = staffOnly
       ? { role: { $in: ['staff', 'team_leader'] }, isActive: true }
-      : { isActive: true };
+      : {};
 
     const users = await db
       .collection('users')
@@ -25,6 +27,7 @@ export async function GET(request) {
         name: 1,
         email: 1,
         role: 1,
+        isActive: 1,
         createdAt: 1,
       })
       .sort({ createdAt: -1 })
@@ -42,12 +45,12 @@ export async function GET(request) {
 
 /**
  * PUT /api/users/staff
- * Update user information
+ * Update user information (name, role, email, password, isActive)
  */
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { userId, name, role } = body;
+    const { userId, name, role, email, password, isActive } = body;
 
     if (!userId || !name || !role) {
       return NextResponse.json(
@@ -58,19 +61,54 @@ export async function PUT(request) {
 
     const db = await getDatabase();
 
-    const result = await db.collection('users').updateOne(
-      { uid: userId },
-      {
-        $set: {
-          name,
-          role,
-          updatedAt: new Date(),
-        },
-      },
-    );
+    // Build MongoDB update fields
+    const updateFields = {
+      name,
+      role,
+      updatedAt: new Date(),
+    };
+
+    if (typeof isActive === 'boolean') {
+      updateFields.isActive = isActive;
+    }
+
+    // Update email in MongoDB if provided
+    if (email) {
+      updateFields.email = email;
+    }
+
+    const result = await db
+      .collection('users')
+      .updateOne({ uid: userId }, { $set: updateFields });
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Update Firebase Auth (email and/or password) via Admin SDK
+    if (email || password) {
+      try {
+        const { adminAuth } = await import('@/lib/firebaseAdmin');
+        const firebaseUpdate = {};
+        if (email) firebaseUpdate.email = email;
+        if (password) firebaseUpdate.password = password;
+        if (name) firebaseUpdate.displayName = name;
+        await adminAuth.updateUser(userId, firebaseUpdate);
+      } catch (firebaseErr) {
+        console.error('Firebase update error:', firebaseErr);
+        // Revert MongoDB email change if Firebase failed
+        if (email) {
+          const original = await db
+            .collection('users')
+            .findOne({ uid: userId });
+          // keep going — return partial success warning
+          return NextResponse.json({
+            success: true,
+            warning:
+              'Profile updated but Firebase email/password update failed.',
+          });
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

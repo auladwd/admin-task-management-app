@@ -1,9 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-toastify';
 import { FiX, FiPaperclip, FiPlus } from 'react-icons/fi';
+
+const emptyForm = {
+  title: '',
+  description: '',
+  assignee: '',
+  dueDate: '',
+  priority: 'medium',
+  attachments: [],
+};
+
+const taskToForm = task => ({
+  title: task?.title || '',
+  description: task?.description || '',
+  assignee: task?.assignee || '',
+  dueDate: task?.dueDate
+    ? new Date(task.dueDate).toISOString().split('T')[0]
+    : '',
+  priority: task?.priority || 'medium',
+  attachments: task?.attachments || [],
+});
 
 /**
  * Task Modal Component
@@ -19,21 +39,17 @@ export default function TaskModal({
   const { userProfile } = useAuth();
   const isEditMode = !!task;
 
-  console.log('TaskModal - staffUsers:', staffUsers);
-
-  const [formData, setFormData] = useState({
-    title: task?.title || '',
-    description: task?.description || '',
-    assignee: task?.assignee || '',
-    dueDate: task?.dueDate
-      ? new Date(task.dueDate).toISOString().split('T')[0]
-      : '',
-    priority: task?.priority || 'medium',
-    attachments: task?.attachments || [],
-  });
-
+  const [formData, setFormData] = useState(emptyForm);
   const [newAttachment, setNewAttachment] = useState({ name: '', url: '' });
   const [loading, setLoading] = useState(false);
+
+  // Reset form every time the modal opens or the task changes
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(task ? taskToForm(task) : emptyForm);
+      setNewAttachment({ name: '', url: '' });
+    }
+  }, [isOpen, task]);
 
   const handleChange = e => {
     setFormData({

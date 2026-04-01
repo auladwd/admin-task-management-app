@@ -7,6 +7,7 @@ import RoleGuard from '@/components/auth/RoleGuard';
 import MainLayout from '@/components/layout/MainLayout';
 import { FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiUser } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { confirmDelete } from '@/utils/confirm';
 
 export default function UsersPage() {
   return (
@@ -60,19 +61,17 @@ function UsersContent() {
   };
 
   const handleDeleteUser = async user => {
-    if (!confirm(`Are you sure you want to delete ${user.name}?`)) {
-      return;
-    }
+    const confirmed = await confirmDelete({
+      title: 'Delete User?',
+      text: `${user.name} will be permanently removed from the system.`,
+    });
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/users/staff?userId=${user.userId}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete user');
-      }
-
+      if (!response.ok) throw new Error('Failed to delete user');
       toast.success('User deleted successfully');
       fetchUsers();
     } catch (error) {
@@ -153,6 +152,7 @@ function UsersContent() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Status</th>
                     <th>Created</th>
                     <th>Actions</th>
                   </tr>
@@ -174,6 +174,13 @@ function UsersContent() {
                       <td>
                         <span className={`badge ${getRoleBadge(user.role)}`}>
                           {getRoleLabel(user.role)}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge badge-sm ${user.isActive !== false ? 'badge-success' : 'badge-error'}`}
+                        >
+                          {user.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
@@ -222,36 +229,49 @@ function UsersContent() {
 function UserModal({ isOpen, onClose, onSuccess, user = null }) {
   const isEditMode = !!user;
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     password: '',
-    role: user?.role || 'staff',
+    confirmPassword: '',
+    role: 'staff',
+    isActive: true,
   });
 
+  // Reset form when modal opens/user changes
   useEffect(() => {
-    if (user) {
+    if (isOpen) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
+        name: user?.name || '',
+        email: user?.email || '',
         password: '',
-        role: user.role || 'staff',
+        confirmPassword: '',
+        role: user?.role || 'staff',
+        isActive: user?.isActive ?? true,
       });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'staff',
-      });
+      setShowPassword(false);
     }
-  }, [user]);
+  }, [isOpen, user]);
+
+  const set = field => e =>
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async e => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email) {
-      toast.error('Please fill in all required fields');
+    if (!formData.name.trim() || !formData.email.trim()) {
+      toast.error('Name and email are required');
+      return;
+    }
+
+    if (formData.password && formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -264,48 +284,56 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
       setLoading(true);
 
       if (isEditMode) {
-        // Update user
+        const payload = {
+          userId: user.userId,
+          name: formData.name.trim(),
+          role: formData.role,
+          isActive: formData.isActive,
+        };
+
+        // Only send email if changed
+        if (formData.email.trim() !== user.email) {
+          payload.email = formData.email.trim();
+        }
+
+        // Only send password if filled
+        if (formData.password) {
+          payload.password = formData.password;
+        }
+
         const response = await fetch('/api/users/staff', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.userId,
-            name: formData.name,
-            role: formData.role,
-          }),
+          body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to update user');
-        }
-
-        toast.success('User updated successfully');
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || 'Failed to update user');
+        if (data.warning) toast.warn(data.warning);
+        else toast.success('User updated successfully');
       } else {
-        // Create new user using Admin API (doesn't affect current session)
         const response = await fetch('/api/users/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: formData.email,
+            email: formData.email.trim(),
             password: formData.password,
-            name: formData.name,
+            name: formData.name.trim(),
             role: formData.role,
           }),
         });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to create user');
-        }
-
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || 'Failed to create user');
         toast.success('User created successfully');
       }
 
       onSuccess();
     } catch (error) {
       console.error('Submit user error:', error);
-      toast.error(error.message || 'Failed to create user');
+      toast.error(error.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
@@ -315,22 +343,29 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-md">
-        <h3 className="font-bold text-lg mb-4">
-          {isEditMode ? 'Edit User' : 'Add New User'}
-        </h3>
+      <div className="modal-box max-w-lg w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-lg">
+            {isEditMode ? 'Edit User' : 'Add New User'}
+          </h3>
+          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
+            ✕
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Name *</span>
+              <span className="label-text font-medium">Full Name *</span>
             </label>
             <input
               type="text"
               className="input input-bordered"
+              placeholder="Enter full name"
               value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              onChange={set('name')}
               required
             />
           </div>
@@ -338,51 +373,103 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
           {/* Email */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Email *</span>
+              <span className="label-text font-medium">Email Address *</span>
+              {isEditMode && (
+                <span className="label-text-alt text-warning">
+                  Changing email will update login credentials
+                </span>
+              )}
             </label>
             <input
               type="email"
               className="input input-bordered"
+              placeholder="Enter email address"
               value={formData.email}
-              onChange={e =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={set('email')}
               required
-              disabled={isEditMode}
             />
           </div>
 
-          {/* Password (only for new users) */}
-          {!isEditMode && (
+          {/* Password */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">
+                {isEditMode ? 'New Password' : 'Password *'}
+              </span>
+              {isEditMode && (
+                <span className="label-text-alt text-base-content/50">
+                  Leave blank to keep current
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="input input-bordered w-full pr-12"
+                placeholder={
+                  isEditMode
+                    ? 'Enter new password (optional)'
+                    : 'Enter password'
+                }
+                value={formData.password}
+                onChange={set('password')}
+                minLength={formData.password ? 6 : undefined}
+                required={!isEditMode}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content text-xs"
+                onClick={() => setShowPassword(p => !p)}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password — only when password is being set */}
+          {formData.password && (
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Password *</span>
+                <span className="label-text font-medium">
+                  Confirm Password *
+                </span>
               </label>
               <input
-                type="password"
-                className="input input-bordered"
-                value={formData.password}
-                onChange={e =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
+                type={showPassword ? 'text' : 'password'}
+                className={`input input-bordered ${
+                  formData.confirmPassword &&
+                  formData.password !== formData.confirmPassword
+                    ? 'input-error'
+                    : formData.confirmPassword &&
+                        formData.password === formData.confirmPassword
+                      ? 'input-success'
+                      : ''
+                }`}
+                placeholder="Re-enter password"
+                value={formData.confirmPassword}
+                onChange={set('confirmPassword')}
                 required
-                minLength={6}
               />
-              <label className="label">
-                <span className="label-text-alt">Minimum 6 characters</span>
-              </label>
+              {formData.confirmPassword &&
+                formData.password !== formData.confirmPassword && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">
+                      Passwords do not match
+                    </span>
+                  </label>
+                )}
             </div>
           )}
 
           {/* Role */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Role *</span>
+              <span className="label-text font-medium">Role *</span>
             </label>
             <select
               className="select select-bordered"
               value={formData.role}
-              onChange={e => setFormData({ ...formData, role: e.target.value })}
+              onChange={set('role')}
               required
             >
               <option value="staff">Staff</option>
@@ -391,8 +478,35 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
             </select>
           </div>
 
+          {/* Active Status — edit mode only */}
+          {isEditMode && (
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-success"
+                  checked={formData.isActive}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      isActive: e.target.checked,
+                    }))
+                  }
+                />
+                <div>
+                  <span className="label-text font-medium">Account Active</span>
+                  <p className="text-xs text-base-content/50">
+                    {formData.isActive
+                      ? 'User can log in'
+                      : 'User cannot log in'}
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="modal-action">
+          <div className="modal-action pt-2">
             <button
               type="button"
               onClick={onClose}
@@ -409,7 +523,7 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
               {loading ? (
                 <span className="loading loading-spinner"></span>
               ) : isEditMode ? (
-                'Update User'
+                'Save Changes'
               ) : (
                 'Create User'
               )}

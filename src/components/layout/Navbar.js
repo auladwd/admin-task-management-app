@@ -77,7 +77,7 @@ export default function Navbar({ title = 'Dashboard' }) {
   };
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-300 px-3 sm:px-4 md:px-6 py-2 sm:py-3 lg:py-7">
+    <div className="navbar bg-base-100 border-b border-base-300 px-3 sm:px-4 md:px-6 py-2 sm:py-3 lg:py-[26px]">
       {/* ── Center: Logo + Organisation Name ── */}
       <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 min-w-0 overflow-hidden pl-12 lg:pl-0">
         {/* Logo */}
@@ -98,7 +98,7 @@ export default function Navbar({ title = 'Dashboard' }) {
           <p className="text-xs sm:text-sm md:text-lg font-bold text-primary leading-tight truncate">
             IDEA PROJECT (2nd Phase)
           </p>
-          <p className="text-[10px] sm:text-xs md:text-base font-medium text-base-content/70 leading-tight truncate">
+          <p className="text-[10px] sm:text-xs md:text-base font-bold text-base-content/70 leading-tight truncate">
             Bangladesh Election Commission
           </p>
         </div>

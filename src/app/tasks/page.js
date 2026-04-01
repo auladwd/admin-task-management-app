@@ -12,6 +12,7 @@ import TaskDetailModal from '@/components/tasks/TaskDetailModal';
 import TaskFilters from '@/components/tasks/TaskFilters';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { confirmDelete } from '@/utils/confirm';
 
 export default function TasksPage() {
   return (
@@ -121,9 +122,11 @@ function TasksContent() {
   };
 
   const handleDeleteTask = async task => {
-    if (!confirm(`Are you sure you want to delete "${task.title}"?`)) {
-      return;
-    }
+    const confirmed = await confirmDelete({
+      title: 'Delete Task?',
+      text: `"${task.title}" will be permanently deleted.`,
+    });
+    if (!confirmed) return;
 
     try {
       await deleteTask(task._id);
