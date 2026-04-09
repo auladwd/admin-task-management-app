@@ -16,6 +16,7 @@ import {
   FiX,
   FiLogOut,
   FiInfo,
+  FiBookOpen,
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
@@ -72,6 +73,12 @@ export default function Sidebar() {
         name: 'Reports',
         href: '/reports',
         icon: FiFileText,
+        roles: ['super_admin', 'team_leader', 'staff'],
+      },
+      {
+        name: 'Notes',
+        href: '/notes',
+        icon: FiBookOpen,
         roles: ['super_admin', 'team_leader', 'staff'],
       },
     ];
