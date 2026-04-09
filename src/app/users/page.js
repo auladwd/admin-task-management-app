@@ -80,6 +80,31 @@ function UsersContent() {
     }
   };
 
+  const handleToggleCreateTask = async user => {
+    const newValue = user.canCreateTask === false ? true : false;
+    try {
+      const response = await fetch('/api/users/staff', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.userId,
+          name: user.name,
+          role: user.role,
+          canCreateTask: newValue,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to update');
+      toast.success(
+        newValue
+          ? `${user.name} can now create tasks`
+          : `${user.name}'s task creation disabled`,
+      );
+      fetchUsers();
+    } catch {
+      toast.error('Failed to update permission');
+    }
+  };
+
   const getRoleBadge = role => {
     const badges = {
       super_admin: 'badge-error',
@@ -153,6 +178,7 @@ function UsersContent() {
                     <th>Email</th>
                     <th>Role</th>
                     <th>Status</th>
+                    <th className="text-center">Can Create Task</th>
                     <th>Created</th>
                     <th>Actions</th>
                   </tr>
@@ -182,6 +208,26 @@ function UsersContent() {
                         >
                           {user.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      {/* Can Create Task toggle — only for staff */}
+                      <td className="text-center">
+                        {user.role === 'staff' ? (
+                          <input
+                            type="checkbox"
+                            className="toggle toggle-primary toggle-sm"
+                            checked={user.canCreateTask !== false}
+                            onChange={() => handleToggleCreateTask(user)}
+                            title={
+                              user.canCreateTask !== false
+                                ? 'Click to disable task creation'
+                                : 'Click to enable task creation'
+                            }
+                          />
+                        ) : (
+                          <span className="text-xs text-base-content/30">
+                            —
+                          </span>
+                        )}
                       </td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td>

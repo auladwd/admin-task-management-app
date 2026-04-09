@@ -28,6 +28,7 @@ export async function GET(request) {
         email: 1,
         role: 1,
         isActive: 1,
+        canCreateTask: 1,
         createdAt: 1,
       })
       .sort({ createdAt: -1 })
@@ -50,7 +51,8 @@ export async function GET(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { userId, name, role, email, password, isActive } = body;
+    const { userId, name, role, email, password, isActive, canCreateTask } =
+      body;
 
     if (!userId || !name || !role) {
       return NextResponse.json(
@@ -70,6 +72,10 @@ export async function PUT(request) {
 
     if (typeof isActive === 'boolean') {
       updateFields.isActive = isActive;
+    }
+
+    if (typeof canCreateTask === 'boolean') {
+      updateFields.canCreateTask = canCreateTask;
     }
 
     // Update email in MongoDB if provided
@@ -123,7 +129,9 @@ export async function PUT(request) {
 
 /**
  * DELETE /api/users/staff
- * Soft delete user (mark as inactive)
+ * Hard delete — removes user from Firebase Auth, MongoDB users,
+ * comments, activity_logs, and notifications.
+ * Tasks assigned to this user are unassigned (not deleted).
  */
 export async function DELETE(request) {
   try {
@@ -139,22 +147,55 @@ export async function DELETE(request) {
 
     const db = await getDatabase();
 
-    // Soft delete - mark as inactive
-    const result = await db.collection('users').updateOne(
-      { uid: userId },
+    // 1. Verify user exists
+    const user = await db.collection('users').findOne({ uid: userId });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // 2. Delete from Firebase Auth via Admin SDK
+    try {
+      const { adminAuth } = await import('@/lib/firebaseAdmin');
+      await adminAuth.deleteUser(userId);
+    } catch (firebaseErr) {
+      // If user doesn't exist in Firebase, continue anyway
+      if (firebaseErr.code !== 'auth/user-not-found') {
+        console.error('Firebase delete error:', firebaseErr);
+        return NextResponse.json(
+          { error: 'Failed to delete user from authentication system' },
+          { status: 500 },
+        );
+      }
+    }
+
+    // 3. Delete user document from MongoDB
+    await db.collection('users').deleteOne({ uid: userId });
+
+    // 4. Unassign tasks (keep tasks but clear assignee info)
+    await db.collection('tasks').updateMany(
+      { assignee: userId },
       {
         $set: {
-          isActive: false,
-          deletedAt: new Date(),
+          assignee: null,
+          assigneeName: '[Deleted User]',
+          updatedAt: new Date(),
         },
       },
     );
 
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    // 5. Delete user's comments
+    await db.collection('comments').deleteMany({ userId });
 
-    return NextResponse.json({ success: true });
+    // 6. Delete user's activity logs
+    await db.collection('activity_logs').deleteMany({ userId });
+
+    // 7. Delete user's notifications
+    await db.collection('notifications').deleteMany({ userId });
+
+    return NextResponse.json({
+      success: true,
+      message: 'User permanently deleted',
+    });
   } catch (error) {
     console.error('Delete user error:', error);
     return NextResponse.json(

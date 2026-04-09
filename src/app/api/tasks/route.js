@@ -81,6 +81,7 @@ export async function POST(request) {
       assigneeName,
       createdBy,
       createdByName,
+      creatorRole,
       dueDate,
       priority,
       attachments = [],
@@ -102,6 +103,25 @@ export async function POST(request) {
     }
 
     const db = await getDatabase();
+
+    // Permission check: staff can only create tasks for themselves
+    // and only if canCreateTask is enabled
+    if (creatorRole === 'staff') {
+      const creator = await db.collection('users').findOne({ uid: createdBy });
+      if (!creator || creator.canCreateTask === false) {
+        return NextResponse.json(
+          { error: 'You do not have permission to create tasks' },
+          { status: 403 },
+        );
+      }
+      // Staff can only assign tasks to themselves
+      if (assignee !== createdBy) {
+        return NextResponse.json(
+          { error: 'Staff members can only create tasks for themselves' },
+          { status: 403 },
+        );
+      }
+    }
 
     // Create task document
     const newTask = {

@@ -123,10 +123,23 @@ export function AuthProvider({ children }) {
   };
 
   /**
-   * Check if user can create/edit tasks
+   * Check if user can create/edit/delete tasks (team leader)
    */
   const canManageTasks = () => {
     return userProfile?.role === 'team_leader';
+  };
+
+  /**
+   * Check if user can create their own tasks
+   * Staff can create tasks only if canCreateTask is enabled (default true)
+   * Team leaders can always create tasks
+   */
+  const canCreateTask = () => {
+    if (userProfile?.role === 'team_leader') return true;
+    if (userProfile?.role === 'staff') {
+      return userProfile?.canCreateTask !== false; // default true
+    }
+    return false;
   };
 
   /**
@@ -149,6 +162,7 @@ export function AuthProvider({ children }) {
     isTeamLeader,
     isStaff,
     canManageTasks,
+    canCreateTask,
     isReadOnly,
     isAuthenticated: !!user,
   };

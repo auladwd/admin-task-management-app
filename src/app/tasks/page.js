@@ -25,7 +25,7 @@ export default function TasksPage() {
 }
 
 function TasksContent() {
-  const { userProfile, canManageTasks } = useAuth();
+  const { userProfile, canManageTasks, canCreateTask, isStaff } = useAuth();
   const searchParams = useSearchParams();
   const statusFromUrl = searchParams.get('status');
   const actionFromUrl = searchParams.get('action');
@@ -77,12 +77,11 @@ function TasksContent() {
 
   // Handle action from URL (e.g., action=create)
   useEffect(() => {
-    if (actionFromUrl === 'create' && canManageTasks() && userProfile) {
+    if (actionFromUrl === 'create' && canCreateTask() && userProfile) {
       setIsCreateModalOpen(true);
-      // Clear the action parameter from URL
       window.history.replaceState({}, '', '/tasks');
     }
-  }, [actionFromUrl, canManageTasks, userProfile]);
+  }, [actionFromUrl, canCreateTask, userProfile]);
 
   // Fetch staff users for assignment
   useEffect(() => {
@@ -180,7 +179,7 @@ function TasksContent() {
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          {canManageTasks() && (
+          {canCreateTask() && (
             <button
               onClick={handleCreateTask}
               className="btn btn-primary btn-sm sm:btn-md flex-1 sm:flex-initial"

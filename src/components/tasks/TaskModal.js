@@ -36,8 +36,10 @@ export default function TaskModal({
   task = null,
   staffUsers = [],
 }) {
-  const { userProfile } = useAuth();
+  const { userProfile, isStaff } = useAuth();
   const isEditMode = !!task;
+  // Staff creating their own task — no assignee selection needed
+  const isStaffMode = isStaff() && !isEditMode;
 
   const [formData, setFormData] = useState(emptyForm);
   const [newAttachment, setNewAttachment] = useState({ name: '', url: '' });
@@ -80,14 +82,21 @@ export default function TaskModal({
     setLoading(true);
 
     try {
-      // Find assignee name
-      const assigneeUser = staffUsers.find(u => u.uid === formData.assignee);
+      // Staff mode: auto-assign to self
+      const effectiveAssignee = isStaffMode
+        ? userProfile.uid
+        : formData.assignee;
+      const assigneeUser = isStaffMode
+        ? { uid: userProfile.uid, name: userProfile.name }
+        : staffUsers.find(u => u.uid === formData.assignee);
 
       const taskData = {
         ...formData,
+        assignee: effectiveAssignee,
         assigneeName: assigneeUser?.name || '',
         createdBy: userProfile.uid,
         createdByName: userProfile.name,
+        creatorRole: userProfile.role,
         updatedBy: userProfile.uid,
         updatedByName: userProfile.name,
       };
@@ -167,36 +176,51 @@ export default function TaskModal({
 
           {/* Assignee & Due Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Assign To *</span>
-              </label>
-              <select
-                name="assignee"
-                className="select select-bordered"
-                value={formData.assignee}
-                onChange={handleChange}
-                required
-              >
-                <option value="">
-                  {staffUsers.length === 0
-                    ? 'No staff members available'
-                    : 'Select staff member'}
-                </option>
-                {staffUsers.map(user => (
-                  <option key={user.uid} value={user.uid}>
-                    {user.name} ({user.email})
-                  </option>
-                ))}
-              </select>
-              {staffUsers.length === 0 && (
+            {/* Assignee — hidden for staff (auto-assigned to self) */}
+            {!isStaffMode && (
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text-alt text-warning">
-                    Please add staff members from the Users page first
-                  </span>
+                  <span className="label-text">Assign To *</span>
                 </label>
-              )}
-            </div>
+                <select
+                  name="assignee"
+                  className="select select-bordered"
+                  value={formData.assignee}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">
+                    {staffUsers.length === 0
+                      ? 'No staff members available'
+                      : 'Select staff member'}
+                  </option>
+                  {staffUsers.map(user => (
+                    <option key={user.uid} value={user.uid}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
+                </select>
+                {staffUsers.length === 0 && (
+                  <label className="label">
+                    <span className="label-text-alt text-warning">
+                      Please add staff members from the Users page first
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
+
+            {/* Staff mode: show self-assign notice */}
+            {isStaffMode && (
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Assigned To</span>
+                </label>
+                <div className="input input-bordered flex items-center bg-base-200 text-base-content/70">
+                  {userProfile?.name} (You)
+                </div>
+              </div>
+            )}
 
             <div className="form-control">
               <label className="label">
