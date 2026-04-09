@@ -62,16 +62,12 @@ function TasksContent() {
   // Apply status filter from URL and fetch tasks
   useEffect(() => {
     if (statusFromUrl && userProfile) {
-      const newStatus = statusFromUrl === 'all' ? 'all' : statusFromUrl;
-      setFilters(prev => {
-        const updated = {
-          ...prev,
-          status: newStatus,
-          userId: userProfile.uid,
-          role: userProfile.role,
-        };
-        return updated;
-      });
+      setFilters(prev => ({
+        ...prev,
+        status: statusFromUrl, // includes 'overdue'
+        userId: userProfile.uid,
+        role: userProfile.role,
+      }));
     }
   }, [statusFromUrl, userProfile]);
 
@@ -148,6 +144,7 @@ function TasksContent() {
       pending: 'Pending Tasks',
       in_progress: 'In Progress Tasks',
       completed: 'Completed Tasks',
+      overdue: 'Overdue Tasks',
     };
     return labels[status] || 'Tasks';
   };

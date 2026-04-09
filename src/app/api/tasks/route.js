@@ -33,9 +33,15 @@ export async function GET(request) {
       filter.assignee = assignee;
     }
 
-    // Status filter
+    // Status filter — 'overdue' is a special case
     if (status && status !== 'all') {
-      filter.status = status;
+      if (status === 'overdue') {
+        // Not completed AND past due date
+        filter.status = { $ne: 'completed' };
+        filter.dueDate = { $lt: new Date() };
+      } else {
+        filter.status = status;
+      }
     }
 
     // Priority filter

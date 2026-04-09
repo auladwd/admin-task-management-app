@@ -128,15 +128,20 @@ function DashboardContent() {
 
         {/* Overdue Alert */}
         {stats?.overdue > 0 && (
-          <div className="alert alert-error shadow-lg">
+          <div
+            onClick={() => router.push('/tasks?status=overdue')}
+            className="alert alert-error shadow-lg cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all"
+            title="Click to view overdue tasks"
+          >
             <FiAlertCircle className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm sm:text-base">Overdue Tasks</h3>
               <div className="text-xs sm:text-sm">
                 You have {stats.overdue} task{stats.overdue > 1 ? 's' : ''} past
-                the due date
+                the due date — click to view
               </div>
             </div>
+            <FiAlertCircle className="w-4 h-4 opacity-60 flex-shrink-0" />
           </div>
         )}
 
