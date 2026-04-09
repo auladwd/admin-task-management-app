@@ -179,7 +179,24 @@ function TasksContent() {
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          {canCreateTask() && (
+          {isStaff() ? (
+            // Staff: always show button, disabled if permission revoked
+            <button
+              onClick={handleCreateTask}
+              className="btn btn-primary btn-sm sm:btn-md flex-1 sm:flex-initial"
+              disabled={!canCreateTask()}
+              title={
+                !canCreateTask()
+                  ? 'Task creation has been disabled by your Team Leader'
+                  : ''
+              }
+            >
+              <FiPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Create Task</span>
+              <span className="sm:hidden">New</span>
+            </button>
+          ) : canCreateTask() ? (
+            // Team Leader: show button normally
             <button
               onClick={handleCreateTask}
               className="btn btn-primary btn-sm sm:btn-md flex-1 sm:flex-initial"
@@ -188,7 +205,7 @@ function TasksContent() {
               <span className="hidden sm:inline">Create Task</span>
               <span className="sm:hidden">New</span>
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 

@@ -32,6 +32,7 @@ export async function GET(request) {
       name: user.name,
       role: user.role,
       isActive: user.isActive,
+      canCreateTask: user.canCreateTask !== false, // default true
       createdAt: user.createdAt,
     });
   } catch (error) {
