@@ -13,14 +13,14 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="btn btn-ghost btn-circle"
+      className="btn btn-ghost btn-circle btn-sm sm:btn-md text-base-content/70 hover:text-primary hover:bg-base-200 transition-all"
       aria-label="Toggle theme"
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
       {theme === 'light' ? (
-        <FiMoon className="w-5 h-5" />
+        <FiMoon className="w-4 h-4 sm:w-5 sm:h-5" />
       ) : (
-        <FiSun className="w-5 h-5" />
+        <FiSun className="w-4 h-4 sm:w-5 sm:h-5" />
       )}
     </button>
   );

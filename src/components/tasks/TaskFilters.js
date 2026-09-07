@@ -1,11 +1,10 @@
 'use client';
 
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiX, FiFilter } from 'react-icons/fi';
 
 /**
  * Task Filters Component
- * Filter tasks by status, priority, assignee, and search
- * Mobile-first responsive design
+ * Modern filter bar with search input, dropdowns, and quick reset
  */
 export default function TaskFilters({
   filters,
@@ -13,86 +12,95 @@ export default function TaskFilters({
   staffUsers = [],
   showAssigneeFilter = true,
 }) {
+  const hasActiveFilters =
+    filters.search ||
+    filters.status !== 'all' ||
+    filters.priority !== 'all' ||
+    filters.assignee !== 'all';
+
   return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body p-3 sm:p-4 md:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Search */}
+    <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
+      <div className="card-body p-4 sm:p-5">
+        <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-base-content/60">
+          <FiFilter className="w-3.5 h-3.5 text-primary" /> Filter & Search
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Search Input */}
           <div className="form-control">
-            <label className="label py-1 sm:py-2">
-              <span className="label-text text-xs sm:text-sm">Search</span>
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <FiSearch className="text-base-content/50 w-4 h-4" />
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 z-10 flex items-center text-base-content/40 pointer-events-none">
+                <FiSearch className="w-4 h-4" />
               </span>
               <input
                 type="text"
-                placeholder="    Search Task ...."
-                className="input input-bordered input-sm sm:input-md w-full pl-10 text-sm"
+                placeholder="Search tasks by title..."
+                className="input input-bordered input-sm sm:input-md w-full rounded-xl text-xs sm:text-sm focus:border-primary bg-base-100 transition-all"
+                style={{ paddingLeft: '2.75rem' }}
                 value={filters.search || ''}
                 onChange={e =>
                   onFilterChange({ ...filters, search: e.target.value })
                 }
               />
+              {filters.search && (
+                <button
+                  onClick={() => onFilterChange({ ...filters, search: '' })}
+                  className="absolute right-3 z-10 flex items-center text-base-content/40 hover:text-base-content p-1"
+                  title="Clear search"
+                >
+                  <FiX className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Status Filter */}
           <div className="form-control">
-            <label className="label py-1 sm:py-2">
-              <span className="label-text text-xs sm:text-sm">Status</span>
-            </label>
             <select
-              className="select select-bordered select-sm sm:select-md text-sm"
+              className="select select-bordered select-sm sm:select-md rounded-xl text-xs sm:text-sm focus:border-primary bg-base-100 font-medium"
               value={filters.status || 'all'}
               onChange={e =>
                 onFilterChange({ ...filters, status: e.target.value })
               }
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="all">All Statuses</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="in_progress">🔄 In Progress</option>
+              <option value="completed">✅ Completed</option>
+              <option value="overdue">⚠️ Overdue</option>
             </select>
           </div>
 
           {/* Priority Filter */}
           <div className="form-control">
-            <label className="label py-1 sm:py-2">
-              <span className="label-text text-xs sm:text-sm">Priority</span>
-            </label>
             <select
-              className="select select-bordered select-sm sm:select-md text-sm"
+              className="select select-bordered select-sm sm:select-md rounded-xl text-xs sm:text-sm focus:border-primary bg-base-100 font-medium"
               value={filters.priority || 'all'}
               onChange={e =>
                 onFilterChange({ ...filters, priority: e.target.value })
               }
             >
               <option value="all">All Priorities</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="high">🔴 High Priority</option>
+              <option value="medium">🟡 Medium Priority</option>
+              <option value="low">🔵 Low Priority</option>
             </select>
           </div>
 
           {/* Assignee Filter */}
           {showAssigneeFilter && (
             <div className="form-control">
-              <label className="label py-1 sm:py-2">
-                <span className="label-text text-xs sm:text-sm">Assignee</span>
-              </label>
               <select
-                className="select select-bordered select-sm sm:select-md text-sm"
+                className="select select-bordered select-sm sm:select-md rounded-xl text-xs sm:text-sm focus:border-primary bg-base-100 font-medium"
                 value={filters.assignee || 'all'}
                 onChange={e =>
                   onFilterChange({ ...filters, assignee: e.target.value })
                 }
               >
-                <option value="all">All Staff</option>
+                <option value="all">All Assignees</option>
                 {staffUsers.map(user => (
                   <option key={user.uid} value={user.uid}>
-                    {user.name}
+                    👤 {user.name}
                   </option>
                 ))}
               </select>
@@ -100,12 +108,12 @@ export default function TaskFilters({
           )}
         </div>
 
-        {/* Clear Filters */}
-        {(filters.search ||
-          filters.status !== 'all' ||
-          filters.priority !== 'all' ||
-          filters.assignee !== 'all') && (
-          <div className="mt-3 sm:mt-4">
+        {/* Active Filter Clear Action */}
+        {hasActiveFilters && (
+          <div className="flex items-center justify-between pt-3 mt-3 border-t border-base-300/60">
+            <span className="text-xs text-base-content/60">
+              Active filters applied
+            </span>
             <button
               onClick={() =>
                 onFilterChange({
@@ -116,9 +124,10 @@ export default function TaskFilters({
                   search: '',
                 })
               }
-              className="btn btn-ghost btn-sm text-xs sm:text-sm"
+              className="btn btn-ghost btn-xs text-primary font-semibold gap-1 hover:bg-primary/10"
             >
-              Clear Filters
+              <FiX className="w-3.5 h-3.5" />
+              Reset All Filters
             </button>
           </div>
         )}

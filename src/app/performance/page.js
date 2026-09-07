@@ -348,8 +348,8 @@ function PerformanceContent() {
             color: 'text-error',
           },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card bg-base-100 shadow-lg">
-            <div className="card-body p-3 sm:p-5">
+          <div key={label} className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft hover:-translate-y-0.5 transition-all">
+            <div className="card-body p-3.5 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-base-content/60">{label}</p>
@@ -373,7 +373,7 @@ function PerformanceContent() {
       </div>
 
       {/* Leaderboard Table */}
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
         <div className="card-body p-3 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <FiAward className="w-5 h-5 text-warning" />
@@ -430,7 +430,7 @@ function PerformanceContent() {
       </div>
 
       {/* Score Formula */}
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
         <div className="card-body p-4 sm:p-6">
           <h3 className="font-bold text-base sm:text-lg mb-4">
             Score Calculation Formula

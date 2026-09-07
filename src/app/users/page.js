@@ -152,8 +152,8 @@ function UsersContent() {
       </div>
 
       {/* Users Table */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
+      <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
+        <div className="card-body p-4 sm:p-6">
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (

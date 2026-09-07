@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-toastify';
-import { FiX, FiPaperclip, FiPlus } from 'react-icons/fi';
+import { FiX, FiPaperclip, FiPlus, FiImage, FiLink, FiFileText } from 'react-icons/fi';
+import ImageUpload from '@/components/common/ImageUpload';
+import { isImageUrl, isPdfUrl, getPdfPreviewUrl } from '@/utils/helpers';
+
+
 
 const emptyForm = {
   title: '',
@@ -60,6 +64,22 @@ export default function TaskModal({
     });
   };
 
+  const handleUploadSuccess = uploadedData => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: [
+        ...prev.attachments,
+        {
+          name: uploadedData.name,
+          url: uploadedData.url,
+          publicId: uploadedData.publicId,
+          size: uploadedData.size,
+          format: uploadedData.format,
+        },
+      ],
+    }));
+  };
+
   const handleAddAttachment = () => {
     if (newAttachment.name && newAttachment.url) {
       setFormData({
@@ -70,12 +90,24 @@ export default function TaskModal({
     }
   };
 
-  const handleRemoveAttachment = index => {
+  const handleRemoveAttachment = async index => {
+    const targetAtt = formData.attachments[index];
+    if (targetAtt?.publicId) {
+      try {
+        fetch(
+          `/api/upload?publicId=${encodeURIComponent(targetAtt.publicId)}`,
+          { method: 'DELETE' }
+        ).catch(() => {});
+      } catch (e) {
+        // silent catch
+      }
+    }
     setFormData({
       ...formData,
       attachments: formData.attachments.filter((_, i) => i !== index),
     });
   };
+
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -259,71 +291,151 @@ export default function TaskModal({
             </div>
           </div>
 
-          {/* Attachments */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Attachments (Links)</span>
+          {/* Attachments & Cloudinary Image Upload */}
+          <div className="form-control space-y-2">
+            <label className="label pb-0">
+              <span className="label-text font-semibold flex items-center gap-1.5">
+                <FiPaperclip className="w-4 h-4 text-primary" />
+                Attachments & Images
+              </span>
+              <span className="label-text-alt text-base-content/60">
+                Uploaded files are saved to Cloudinary
+              </span>
             </label>
 
-            {/* Existing Attachments */}
+            {/* Cloudinary Dropzone / File Picker */}
+            <ImageUpload
+              folder="task_manager/tasks"
+              multiple={true}
+              onUploadSuccess={handleUploadSuccess}
+              label="Upload Documents, Letters or Images to Cloudinary"
+            />
+
+            {/* Existing / Uploaded Attachments Preview Grid */}
             {formData.attachments.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {formData.attachments.map((att, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 p-2 bg-base-200 rounded"
-                  >
-                    <FiPaperclip className="w-4 h-4" />
-                    <a
-                      href={att.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 link link-primary text-sm truncate"
-                    >
-                      {att.name}
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAttachment(index)}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      <FiX />
-                    </button>
-                  </div>
-                ))}
+              <div className="space-y-2 pt-2">
+                <p className="text-xs font-semibold text-base-content/70">
+                  Attached Files ({formData.attachments.length}):
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {formData.attachments.map((att, index) => {
+                    const isImg = isImageUrl(att.url);
+                    const isPdf = isPdfUrl(att.url);
+                    const pdfThumbnail = isPdf ? getPdfPreviewUrl(att.url) : null;
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2.5 p-2 bg-base-200/80 border border-base-300 rounded-lg group hover:bg-base-200 transition-colors"
+                      >
+                        {/* Thumbnail or Icon */}
+                        {isImg ? (
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-base-300 flex-shrink-0 border border-base-300">
+                            <img
+                              src={att.url}
+                              alt={att.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : isPdf ? (
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-error/10 text-error flex items-center justify-center flex-shrink-0 border border-error/20 relative">
+                            {pdfThumbnail ? (
+                              <img
+                                src={pdfThumbnail}
+                                alt={att.name}
+                                className="w-full h-full object-cover"
+                                onError={e => {
+                                  // Fallback to icon if thumbnail rasterization fails
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                            <FiFileText className="w-5 h-5 text-error absolute" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                            <FiPaperclip className="w-5 h-5" />
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-xs font-medium link link-hover link-primary truncate"
+                            title={att.name}
+                          >
+                            {att.name}
+                          </a>
+                          <span className="text-[10px] text-base-content/50 uppercase font-semibold">
+                            {isImg
+                              ? 'Image'
+                              : isPdf
+                              ? 'PDF Document'
+                              : 'File Link'}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(index)}
+                          className="btn btn-ghost btn-xs btn-circle text-error/70 hover:text-error hover:bg-error/10"
+                          title="Remove attachment"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
-            {/* Add New Attachment */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="File name"
-                className="input input-bordered input-sm flex-1"
-                value={newAttachment.name}
-                onChange={e =>
-                  setNewAttachment({ ...newAttachment, name: e.target.value })
-                }
-              />
-              <input
-                type="url"
-                placeholder="File URL"
-                className="input input-bordered input-sm flex-1"
-                value={newAttachment.url}
-                onChange={e =>
-                  setNewAttachment({ ...newAttachment, url: e.target.value })
-                }
-              />
-              <button
-                type="button"
-                onClick={handleAddAttachment}
-                className="btn btn-sm btn-ghost"
-                disabled={!newAttachment.name || !newAttachment.url}
-              >
-                <FiPlus />
-              </button>
-            </div>
+            {/* Manual URL Input Alternative (Collapsible / Compact) */}
+            <details className="collapse collapse-arrow bg-base-200/50 border border-base-300/60 rounded-lg text-xs mt-2">
+              <summary className="collapse-title text-xs font-medium py-2 min-h-0 text-base-content/70">
+                Or add custom link manually
+              </summary>
+              <div className="collapse-content space-y-2 pt-1 pb-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Link title"
+                    className="input input-bordered input-xs flex-1"
+                    value={newAttachment.name}
+                    onChange={e =>
+                      setNewAttachment({
+                        ...newAttachment,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    className="input input-bordered input-xs flex-1"
+                    value={newAttachment.url}
+                    onChange={e =>
+                      setNewAttachment({
+                        ...newAttachment,
+                        url: e.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddAttachment}
+                    className="btn btn-xs btn-primary"
+                    disabled={!newAttachment.name || !newAttachment.url}
+                  >
+                    <FiPlus /> Add
+                  </button>
+                </div>
+              </div>
+            </details>
           </div>
+
 
           {/* Actions */}
           <div className="modal-action">

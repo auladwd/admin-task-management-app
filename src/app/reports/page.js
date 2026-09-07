@@ -255,7 +255,7 @@ function ReportsContent() {
       </div>
 
       {/* Filters */}
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
         <div className="card-body p-4 sm:p-6">
           <h2 className="card-title text-base sm:text-lg">Report Filters</h2>
 
@@ -349,7 +349,7 @@ function ReportsContent() {
 
       {/* Report Results */}
       {reportData && (
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
           <div className="card-body p-4 sm:p-6">
             {/* Result Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">

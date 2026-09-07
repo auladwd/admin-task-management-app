@@ -89,11 +89,26 @@ export async function PUT(request, { params }) {
     // Create activity log
     let actionType = 'task_updated';
     let description = `updated task "${currentTask.title}"`;
+    const oldAttachments = currentTask.attachments || [];
+    const newAttachments = body.attachments || oldAttachments;
+    const isAttachmentUpdate =
+      body.attachments &&
+      JSON.stringify(oldAttachments) !== JSON.stringify(newAttachments);
+    const attachmentDiff = newAttachments.length - oldAttachments.length;
 
     if (body.status && body.status !== currentTask.status) {
       actionType =
         body.status === 'completed' ? 'task_completed' : 'status_changed';
       description = `changed status to "${body.status}" for task "${currentTask.title}"`;
+    } else if (isAttachmentUpdate) {
+      actionType = 'attachments_updated';
+      if (attachmentDiff > 0) {
+        description = `attached ${attachmentDiff} new file/letter(s) to task "${currentTask.title}"`;
+      } else if (attachmentDiff < 0) {
+        description = `removed file/attachment from task "${currentTask.title}"`;
+      } else {
+        description = `updated attachments for task "${currentTask.title}"`;
+      }
     }
 
     await createActivityLog({
@@ -106,12 +121,39 @@ export async function PUT(request, { params }) {
       metadata: {
         oldStatus: currentTask.status,
         newStatus: body.status,
+        attachmentsCount: newAttachments.length,
       },
     });
 
     // --- Notifications ---
     const updatedBy = body.updatedBy || currentTask.createdBy;
     const updatedByName = body.updatedByName || currentTask.createdByName;
+
+    // Attachments added notification: notify creator or assignee
+    if (isAttachmentUpdate && attachmentDiff > 0) {
+      // If staff attached, notify creator
+      if (updatedBy !== currentTask.createdBy && currentTask.createdBy) {
+        await createNotification({
+          userId: currentTask.createdBy,
+          title: 'Documents/Letters Attached',
+          message: `${updatedByName} attached ${attachmentDiff} file(s)/letter(s) to "${currentTask.title}"`,
+          type: 'attachment_added',
+          taskId: id,
+          taskTitle: currentTask.title,
+        });
+      }
+      // If manager attached, notify assignee
+      if (updatedBy !== currentTask.assignee && currentTask.assignee) {
+        await createNotification({
+          userId: currentTask.assignee,
+          title: 'New Documents/Letters Attached',
+          message: `${updatedByName} attached ${attachmentDiff} file(s)/letter(s) to "${currentTask.title}"`,
+          type: 'attachment_added',
+          taskId: id,
+          taskTitle: currentTask.title,
+        });
+      }
+    }
 
     // Status changed: notify the task creator (if different from updater)
     if (body.status && body.status !== currentTask.status) {

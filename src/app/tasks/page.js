@@ -215,8 +215,8 @@ function TasksContent() {
       />
 
       {/* Task Table */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body p-3 sm:p-4 md:p-6">
+      <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
+        <div className="card-body p-3 sm:p-5 md:p-6">
           <TaskTable
             tasks={tasks}
             onEdit={handleEditTask}

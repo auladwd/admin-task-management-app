@@ -12,6 +12,7 @@ import {
   FiUser,
   FiAlertCircle,
   FiEdit,
+  FiShield,
 } from 'react-icons/fi';
 
 /** Icon per notification type */
@@ -42,7 +43,7 @@ function timeAgo(date) {
 
 /**
  * Top Navigation Bar Component
- * Mobile-first responsive design with live notifications
+ * Modern glassmorphic responsive navbar with real-time notifications
  */
 export default function Navbar({ title = 'Dashboard' }) {
   const { userProfile } = useAuth();
@@ -77,183 +78,198 @@ export default function Navbar({ title = 'Dashboard' }) {
   };
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-300 px-3 sm:px-4 md:px-6 py-2 sm:py-3 lg:py-[26px]">
-      {/* ── Center: Logo + Organisation Name ── */}
-      <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 min-w-0 overflow-hidden pl-12 lg:pl-0">
-        {/* Logo */}
-        <div className="flex-shrink-0">
-          <img
-            src="/org-logo.png"
-            alt="Bangladesh Election Commission"
-            className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain"
-            onError={e => {
-              e.currentTarget.src = '/org-logo.svg';
-              e.currentTarget.onerror = null;
-            }}
-          />
+    <header className="glass-navbar sticky top-0 z-30 h-20 px-3 sm:px-6 flex items-center border-b border-base-300/80 transition-colors flex-shrink-0">
+      <div className="flex items-center justify-between w-full">
+        {/* ── Left Placeholder / Spacer (balances right side & accommodates mobile menu button) ── */}
+        <div className="flex items-center justify-start flex-1 min-w-0">
+          <div className="w-9 sm:w-10 lg:w-0 flex-shrink-0" />
         </div>
 
-        {/* Organisation Text */}
-        <div className="min-w-0 hidden xs:block">
-          <p className="text-xs sm:text-sm md:text-lg font-bold text-primary leading-tight truncate">
-            IDEA PROJECT (2nd Phase)
-          </p>
-          <p className="text-[10px] sm:text-xs md:text-base font-bold text-base-content/70 leading-tight truncate">
-            Bangladesh Election Commission
-          </p>
-        </div>
+        {/* ── Center: Logo + Organisation Name ── */}
+        <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-shrink-0 px-2">
+          <div className="relative flex-shrink-0">
+            <img
+              src="/org-logo.png"
+              alt="Bangladesh Election Commission"
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain drop-shadow-sm transition-transform hover:scale-105"
+              onError={e => {
+                e.currentTarget.src = '/org-logo.svg';
+                e.currentTarget.onerror = null;
+              }}
+            />
+          </div>
 
-        {/* Mobile: only show on very small screens as compact text */}
-        <div className="min-w-0 block xs:hidden">
-          <p className="text-[10px] font-bold text-primary leading-tight truncate">
-            IDEA PROJECT (2nd Phase)
-          </p>
-          <p className="text-[9px] text-base-content/60 leading-tight truncate">
-            Bangladesh Election Commission
-          </p>
-        </div>
-      </div>
-
-      {/* Right Side Actions */}
-      <div className="flex-none gap-1 sm:gap-2 items-center">
-        {/* Theme Toggle - Desktop Only */}
-        <div className="hidden lg:block">
-          <ThemeToggle />
-        </div>
-
-        {/* Notification Bell */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={handleOpen}
-            className="btn btn-ghost btn-circle btn-sm sm:btn-md relative"
-            title="Notifications"
-            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-          >
-            <FiBell className="w-4 h-4 sm:w-5 sm:h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center px-1 leading-none">
-                {unreadCount > 99 ? '99+' : unreadCount}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-xs sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight truncate">
+                IDEA PROJECT (2nd Phase)
               </span>
-            )}
-          </button>
+              <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                <FiShield className="w-2.5 h-2.5" /> EC Official
+              </span>
+            </div>
+            <p className="text-[10px] sm:text-xs text-base-content/70 font-medium leading-tight truncate text-left">
+              Bangladesh Election Commission
+            </p>
+          </div>
+        </div>
 
-          {/* Dropdown Panel */}
-          {open && (
-            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-base-100 border border-base-300 rounded-2xl shadow-2xl z-50 overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-200">
-                <span className="font-bold text-sm sm:text-base">
-                  Notifications
-                  {unreadCount > 0 && (
-                    <span className="ml-2 badge badge-error badge-sm">
-                      {unreadCount}
-                    </span>
-                  )}
+        {/* ── Right Side Actions ── */}
+        <div className="flex items-center justify-end gap-1 sm:gap-2.5 flex-1 min-w-0">
+          {/* Dark / Light Mode Toggle */}
+          <ThemeToggle />
+
+          {/* Notification Bell */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={handleOpen}
+              className={`
+                btn btn-ghost btn-circle btn-sm sm:btn-md relative transition-all
+                ${open ? 'bg-base-200 text-primary' : 'text-base-content/70 hover:text-primary hover:bg-base-200'}
+              `}
+              title="Notifications"
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            >
+              <FiBell className="w-4 h-4 sm:w-5 sm:h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center px-1 leading-none shadow-sm animate-pulse">
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="btn btn-ghost btn-xs gap-1 text-xs"
-                    title="Mark all as read"
-                  >
-                    <FiCheck className="w-3 h-3" />
-                    Mark all read
-                  </button>
-                )}
-              </div>
+              )}
+            </button>
 
-              {/* List */}
-              <div className="max-h-[420px] overflow-y-auto divide-y divide-base-200">
-                {loading && notifications.length === 0 ? (
-                  <div className="flex justify-center py-8">
-                    <span className="loading loading-spinner loading-md"></span>
+            {/* Dropdown Panel */}
+            {open && (
+              <div className="absolute right-0 top-full mt-2.5 w-80 sm:w-96 bg-base-100 border border-base-300/80 rounded-2xl shadow-soft-lg z-50 overflow-hidden animate-fade-in">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-base-300/80 bg-base-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm sm:text-base">
+                      Notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="badge badge-error badge-sm text-white font-semibold">
+                        {unreadCount} new
+                      </span>
+                    )}
                   </div>
-                ) : notifications.length === 0 ? (
-                  <div className="text-center py-10 px-4">
-                    <FiBell className="mx-auto w-10 h-10 text-base-content/20 mb-3" />
-                    <p className="text-sm text-base-content/60">
-                      No notifications yet
-                    </p>
-                  </div>
-                ) : (
-                  notifications.map(n => (
-                    <div
-                      key={n._id}
-                      className={`flex items-start gap-3 px-4 py-3 hover:bg-base-200 transition-colors cursor-default ${!n.isRead ? 'bg-primary/5' : ''}`}
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="btn btn-ghost btn-xs gap-1 text-xs text-primary font-medium hover:bg-primary/10"
+                      title="Mark all as read"
                     >
-                      {/* Icon */}
-                      <div
-                        className={`mt-0.5 p-1.5 rounded-lg flex-shrink-0 ${!n.isRead ? 'bg-primary/10' : 'bg-base-200'}`}
-                      >
-                        <NotifIcon type={n.type} />
-                      </div>
+                      <FiCheck className="w-3 h-3" />
+                      Mark all read
+                    </button>
+                  )}
+                </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-xs sm:text-sm leading-snug ${!n.isRead ? 'font-semibold' : ''}`}
-                        >
-                          {n.title}
-                        </p>
-                        <p className="text-xs text-base-content/60 mt-0.5 line-clamp-2">
-                          {n.message}
-                        </p>
-                        <p className="text-[10px] text-base-content/40 mt-1">
-                          {timeAgo(n.createdAt)}
-                        </p>
-                      </div>
-
-                      {/* Mark single read */}
-                      {!n.isRead && (
-                        <button
-                          onClick={e => handleMarkOne(e, n._id)}
-                          className="btn btn-ghost btn-xs btn-circle flex-shrink-0 mt-0.5"
-                          title="Mark as read"
-                        >
-                          <FiCheck className="w-3 h-3" />
-                        </button>
-                      )}
+                {/* List */}
+                <div className="max-h-[380px] overflow-y-auto divide-y divide-base-200">
+                  {loading && notifications.length === 0 ? (
+                    <div className="flex justify-center py-8">
+                      <span className="loading loading-spinner loading-md text-primary"></span>
                     </div>
-                  ))
+                  ) : notifications.length === 0 ? (
+                    <div className="text-center py-10 px-4">
+                      <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto mb-2 text-base-content/30">
+                        <FiBell className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-medium text-base-content/70">
+                        No notifications yet
+                      </p>
+                      <p className="text-xs text-base-content/40 mt-0.5">
+                        You're all caught up!
+                      </p>
+                    </div>
+                  ) : (
+                    notifications.map(n => (
+                      <div
+                        key={n._id}
+                        className={`flex items-start gap-3 px-4 py-3 hover:bg-base-200/80 transition-colors cursor-default ${
+                          !n.isRead ? 'bg-primary/5' : ''
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div
+                          className={`mt-0.5 p-2 rounded-xl flex-shrink-0 ${
+                            !n.isRead
+                              ? 'bg-primary/10 ring-1 ring-primary/20'
+                              : 'bg-base-200'
+                          }`}
+                        >
+                          <NotifIcon type={n.type} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-xs sm:text-sm leading-snug ${
+                              !n.isRead
+                                ? 'font-bold text-base-content'
+                                : 'font-medium text-base-content/80'
+                            }`}
+                          >
+                            {n.title}
+                          </p>
+                          <p className="text-xs text-base-content/60 mt-0.5 line-clamp-2">
+                            {n.message}
+                          </p>
+                          <p className="text-[10px] text-base-content/40 mt-1 font-medium">
+                            {timeAgo(n.createdAt)}
+                          </p>
+                        </div>
+
+                        {/* Mark single read */}
+                        {!n.isRead && (
+                          <button
+                            onClick={e => handleMarkOne(e, n._id)}
+                            className="btn btn-ghost btn-xs btn-circle flex-shrink-0 mt-0.5 text-primary hover:bg-primary/10"
+                            title="Mark as read"
+                          >
+                            <FiCheck className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer */}
+                {notifications.length > 0 && (
+                  <div className="px-4 py-2 border-t border-base-300/80 bg-base-200/40 text-center">
+                    <span className="text-xs text-base-content/50">
+                      Showing latest notifications
+                    </span>
+                  </div>
                 )}
               </div>
+            )}
+          </div>
 
-              {/* Footer */}
-              {notifications.length > 0 && (
-                <div className="px-4 py-2 border-t border-base-300 bg-base-200 text-center">
-                  <span className="text-xs text-base-content/50">
-                    Showing last {notifications.length} notifications
-                  </span>
-                </div>
+          {/* User Avatar with Perfectly Centered Initial */}
+          <div
+            className="cursor-pointer flex-shrink-0"
+            title={userProfile?.name || 'Profile'}
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-primary to-accent text-white ring-2 ring-primary/25 shadow-soft-sm hover:scale-105 transition-transform flex items-center justify-center text-center overflow-hidden">
+              {userProfile?.photoURL ? (
+                <img
+                  src={userProfile.photoURL}
+                  alt={userProfile.name || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xs sm:text-sm font-bold leading-none select-none inline-flex items-center justify-center text-center">
+                  {userProfile?.name?.charAt(0).toUpperCase() || 'A'}
+                </span>
               )}
             </div>
-          )}
-        </div>
-
-        {/* User Avatar */}
-        <div className="dropdown dropdown-end">
-          <div className="avatar placeholder cursor-pointer" tabIndex={0}>
-            <div className="bg-primary text-primary-content rounded-full w-8 h-8 sm:w-10 sm:h-10">
-              <span className="text-sm sm:text-lg">
-                {userProfile?.name?.charAt(0).toUpperCase()}
-              </span>
-            </div>
           </div>
-          <ul className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52 mt-3 border border-base-300">
-            <li className="menu-title">
-              <span className="text-xs sm:text-sm truncate">
-                {userProfile?.name}
-              </span>
-            </li>
-            <li>
-              <a className="text-sm">Profile Settings</a>
-            </li>
-            <li>
-              <a className="text-sm">Preferences</a>
-            </li>
-          </ul>
+
         </div>
       </div>
-    </div>
+    </header>
   );
 }

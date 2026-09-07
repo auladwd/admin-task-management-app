@@ -84,3 +84,77 @@ export const formatStatus = status => {
   if (!status) return '';
   return status.split('_').map(capitalize).join(' ');
 };
+
+/**
+ * Check if a URL points to a PDF
+ */
+export const isPdfUrl = (url = '') => {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.pdf') || cleanUrl.includes('.pdf');
+};
+
+/**
+ * Check if a URL points to an image (excluding PDFs)
+ */
+export const isImageUrl = (url = '') => {
+  if (!url) return false;
+  if (isPdfUrl(url)) return false;
+  if (/\.(docx?|xlsx?|pptx?|txt|csv|zip|rar|tar|gz)(\?.*)?$/i.test(url)) return false;
+  return (
+    /\.(jpeg|jpg|gif|png|webp|svg|bmp)(\?.*)?$/i.test(url) ||
+    url.includes('/image/upload/')
+  );
+};
+
+/**
+ * Get Cloudinary PDF page 1 rasterized preview image URL
+ */
+export const getPdfPreviewUrl = (url = '') => {
+  if (!url) return '';
+  if (!isPdfUrl(url)) return url;
+  if (url.includes('cloudinary.com')) {
+    // Cloudinary automatically rasterizes page 1 of PDF to JPG
+    const baseJpg = url.replace(/\.pdf(\?.*)?$/i, '.jpg$1');
+    if (baseJpg.includes('/image/upload/')) {
+      return baseJpg.replace(
+        '/image/upload/',
+        '/image/upload/pg_1,w_800,c_limit,q_auto/'
+      );
+    }
+    return baseJpg;
+  }
+  return '';
+};
+
+/**
+ * Get Cloudinary PDF page image URL with custom page number and width
+ */
+export const getPdfPageUrl = (url = '', page = 1, width = 1400) => {
+  if (!url) return '';
+  if (!isPdfUrl(url)) return url;
+  if (url.includes('cloudinary.com')) {
+    const baseJpg = url.replace(/\.pdf(\?.*)?$/i, '.jpg$1');
+    if (baseJpg.includes('/image/upload/')) {
+      return baseJpg.replace(
+        '/image/upload/',
+        `/image/upload/pg_${page},w_${width},c_limit,q_auto:good/`
+      );
+    }
+    return baseJpg;
+  }
+  return url;
+};
+
+
+/**
+ * Format bytes into human readable file size
+ */
+export const formatFileSize = bytes => {
+  if (!bytes || isNaN(bytes)) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+
