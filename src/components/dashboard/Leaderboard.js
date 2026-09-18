@@ -2,7 +2,7 @@
 
 /**
  * Performance Leaderboard Component
- * Displays top performing staff members with podium highlights
+ * Displays top performing staff members with rankings, insights, and scores.
  */
 export default function Leaderboard({ data, loading = false }) {
   if (loading) {
@@ -60,10 +60,11 @@ export default function Leaderboard({ data, loading = false }) {
     }
   };
 
-  const getScoreColor = score => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-info';
-    if (score >= 40) return 'text-warning';
+  const getScoreColor = (score, assigned) => {
+    if (assigned === 0) return 'text-base-content/40';
+    if (score >= 90) return 'text-success';
+    if (score >= 75) return 'text-info';
+    if (score >= 60) return 'text-warning';
     return 'text-error';
   };
 
@@ -71,7 +72,7 @@ export default function Leaderboard({ data, loading = false }) {
     <div className="space-y-2.5">
       {data.slice(0, 10).map(item => (
         <div
-          key={item.userId}
+          key={item.userId || item.uid}
           className={`
             flex items-center gap-3 p-3 rounded-xl border transition-all duration-200
             ${
@@ -90,14 +91,30 @@ export default function Leaderboard({ data, loading = false }) {
 
           {/* User Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="font-bold text-sm truncate text-base-content">
                 {item.name}
               </p>
+              {item.grade && item.assigned > 0 && (
+                <span className={`badge badge-xs ${
+                  item.gradeColor === 'success' ? 'badge-success text-success-content' :
+                  item.gradeColor === 'info' ? 'badge-info text-info-content' :
+                  item.gradeColor === 'warning' ? 'badge-warning text-warning-content' : 'badge-ghost'
+                }`}>
+                  {item.grade}
+                </span>
+              )}
             </div>
             <p className="text-xs text-base-content/60 truncate">
               {item.email}
             </p>
+            {item.insights && item.insights.length > 0 && item.assigned > 0 && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[11px] text-base-content/70">
+                  {item.insights[0].icon} {item.insights[0].text}
+                </span>
+              </div>
+            )}
             <div className="flex gap-2.5 mt-1 text-[11px] text-base-content/60 sm:hidden">
               <span>
                 {item.completed}/{item.assigned} tasks
@@ -119,12 +136,18 @@ export default function Leaderboard({ data, loading = false }) {
               <p className="font-bold text-success">{item.completedOnTime}</p>
               <p className="text-[10px] text-base-content/50 uppercase">On Time</p>
             </div>
+            {item.overdue > 0 && (
+              <div className="text-right">
+                <p className="font-bold text-error">{item.overdue}</p>
+                <p className="text-[10px] text-base-content/50 uppercase">Overdue</p>
+              </div>
+            )}
           </div>
 
           {/* Score Pill */}
-          <div className="flex-shrink-0 text-right min-w-[48px]">
-            <p className={`text-lg sm:text-xl font-black ${getScoreColor(item.score)}`}>
-              {item.score.toFixed(0)}
+          <div className="flex-shrink-0 text-right min-w-[52px]">
+            <p className={`text-lg sm:text-xl font-black ${getScoreColor(item.score, item.assigned)}`}>
+              {item.assigned > 0 ? item.score.toFixed(0) : '—'}
             </p>
             <p className="text-[10px] uppercase font-bold tracking-wider text-base-content/40">
               Score

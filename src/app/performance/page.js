@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AuthGuard from '@/components/auth/AuthGuard';
 import RoleGuard from '@/components/auth/RoleGuard';
 import MainLayout from '@/components/layout/MainLayout';
@@ -14,6 +14,9 @@ import {
   FiAlertCircle,
   FiChevronDown,
   FiChevronUp,
+  FiSearch,
+  FiFilter,
+  FiZap,
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
@@ -32,36 +35,68 @@ export default function PerformancePage() {
 /* ── helpers ── */
 const rankIcon = i => ['🥇', '🥈', '🥉'][i] ?? `#${i + 1}`;
 
-function ScoreBadge({ score, grade, gradeColor }) {
+function ScoreBadge({ score, grade, gradeColor, assigned }) {
+  if (assigned === 0) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xl sm:text-2xl font-bold text-base-content/40">—</span>
+        <span className="badge badge-sm badge-ghost">No Tasks</span>
+      </div>
+    );
+  }
+
   const cls =
     {
-      success: 'badge-success',
-      info: 'badge-info',
-      warning: 'badge-warning',
-      error: 'badge-error',
+      success: 'badge-success text-success-content',
+      info: 'badge-info text-info-content',
+      warning: 'badge-warning text-warning-content',
+      error: 'badge-error text-error-content',
     }[gradeColor] || 'badge-ghost';
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className={`text-xl sm:text-2xl font-bold text-${gradeColor}`}>
+      <span
+        className={`text-xl sm:text-2xl font-bold ${
+          gradeColor === 'success'
+            ? 'text-success'
+            : gradeColor === 'info'
+              ? 'text-info'
+              : gradeColor === 'warning'
+                ? 'text-warning'
+                : 'text-error'
+        }`}
+      >
         {score.toFixed(1)}
       </span>
-      <span className={`badge badge-sm ${cls}`}>{grade}</span>
+      <span className={`badge badge-sm font-semibold ${cls}`}>
+        {grade}
+      </span>
     </div>
   );
 }
 
 function ProgressBar({ value, color = 'bg-primary' }) {
   return (
-    <div className="w-full bg-base-300 rounded-full h-2">
+    <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
       <div
         className={`${color} h-2 rounded-full transition-all duration-500`}
-        style={{ width: `${Math.min(100, value)}%` }}
+        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </div>
   );
 }
 
-/* ── Expandable row for mobile / detail view ── */
+function DetailStat({ label, value, color = 'text-base-content', sub = '' }) {
+  return (
+    <div className="bg-base-100 border border-base-200 rounded-xl p-2.5 sm:p-3 text-center shadow-xs">
+      <p className={`text-lg sm:text-xl font-extrabold ${color}`}>{value}</p>
+      <p className="text-[11px] font-medium text-base-content/70 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-base-content/40">{sub}</p>}
+    </div>
+  );
+}
+
+/* ── Expandable row for staff detailed activity analysis ── */
 function StaffRow({ user, index }) {
   const [open, setOpen] = useState(false);
 
@@ -69,50 +104,57 @@ function StaffRow({ user, index }) {
     <>
       {/* Main row */}
       <tr
-        className={`cursor-pointer hover:bg-base-200 transition-colors ${index < 3 ? 'bg-base-200/60' : ''}`}
+        className={`cursor-pointer hover:bg-base-200/80 transition-colors ${
+          index < 3 ? 'bg-base-200/40' : ''
+        }`}
         onClick={() => setOpen(o => !o)}
       >
         {/* Rank */}
-        <td className="text-center text-xl font-bold w-12">
+        <td className="text-center text-lg sm:text-xl font-bold w-12">
           {rankIcon(index)}
         </td>
 
-        {/* Name */}
+        {/* Name & Role */}
         <td>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <div className="avatar placeholder flex-shrink-0">
-              <div className="bg-primary text-primary-content rounded-full w-8 h-8 sm:w-10 sm:h-10">
+              <div className="bg-gradient-to-tr from-primary to-primary-focus text-primary-content rounded-full w-9 h-9 sm:w-10 sm:h-10 font-bold shadow-xs">
                 <span className="text-xs sm:text-sm">
                   {user.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-sm sm:text-base truncate">
-                {user.name}
-              </p>
-              <p className="text-xs text-base-content/50 truncate hidden sm:block">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="font-bold text-sm sm:text-base text-base-content truncate">
+                  {user.name}
+                </p>
+                {user.role === 'team_leader' && (
+                  <span className="badge badge-xs badge-secondary">Team Leader</span>
+                )}
+              </div>
+              <p className="text-xs text-base-content/50 truncate">
                 {user.email}
               </p>
             </div>
           </div>
         </td>
 
-        {/* Tasks */}
+        {/* Tasks (Done / Assigned) */}
         <td className="text-center">
-          <p className="font-semibold text-sm">
+          <p className="font-bold text-sm">
             {user.completed}/{user.assigned}
           </p>
-          <p className="text-xs text-base-content/50">done</p>
+          <p className="text-[10px] text-base-content/50">done</p>
         </td>
 
         {/* Completion Rate */}
-        <td className="hidden md:table-cell min-w-[120px]">
+        <td className="hidden md:table-cell min-w-[130px]">
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span>Completion</span>
-              <span className="font-semibold">
-                {user.completionRate.toFixed(1)}%
+              <span className="text-base-content/70">Completion</span>
+              <span className="font-bold text-primary">
+                {user.assigned > 0 ? `${user.completionRate.toFixed(1)}%` : '—'}
               </span>
             </div>
             <ProgressBar value={user.completionRate} color="bg-primary" />
@@ -120,128 +162,197 @@ function StaffRow({ user, index }) {
         </td>
 
         {/* On-Time Rate */}
-        <td className="hidden lg:table-cell min-w-[120px]">
+        <td className="hidden lg:table-cell min-w-[130px]">
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span>On-Time</span>
-              <span className="font-semibold">
-                {user.onTimeRate.toFixed(1)}%
+              <span className="text-base-content/70">On-Time</span>
+              <span className="font-bold text-success">
+                {user.completed > 0 ? `${user.onTimeRate.toFixed(1)}%` : '—'}
               </span>
             </div>
             <ProgressBar value={user.onTimeRate} color="bg-success" />
           </div>
         </td>
 
-        {/* Overdue */}
+        {/* Overdue Badge */}
         <td className="text-center hidden sm:table-cell">
           <span
-            className={`badge badge-sm ${user.overdue > 0 ? 'badge-error' : 'badge-ghost'}`}
+            className={`badge badge-sm font-bold ${
+              user.overdue > 0 ? 'badge-error text-error-content' : 'badge-ghost text-base-content/40'
+            }`}
           >
             {user.overdue}
           </span>
         </td>
 
-        {/* Score */}
+        {/* Score & Grade */}
         <td>
           <ScoreBadge
             score={user.score}
             grade={user.grade}
             gradeColor={user.gradeColor}
+            assigned={user.assigned}
           />
         </td>
 
         {/* Expand toggle */}
         <td className="text-center">
-          {open ? (
-            <FiChevronUp className="w-4 h-4 mx-auto" />
-          ) : (
-            <FiChevronDown className="w-4 h-4 mx-auto" />
-          )}
+          <div className="btn btn-ghost btn-xs btn-circle">
+            {open ? (
+              <FiChevronUp className="w-4 h-4" />
+            ) : (
+              <FiChevronDown className="w-4 h-4" />
+            )}
+          </div>
         </td>
       </tr>
 
-      {/* Expanded detail row */}
+      {/* Expanded detail view */}
       {open && (
         <tr>
-          <td colSpan={8} className="bg-base-200/40 px-4 py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <DetailStat
-                label="Assigned"
-                value={user.assigned}
-                color="text-base-content"
-              />
-              <DetailStat
-                label="Completed"
-                value={user.completed}
-                color="text-success"
-              />
-              <DetailStat
-                label="On Time"
-                value={user.completedOnTime}
-                color="text-success"
-              />
-              <DetailStat
-                label="Late"
-                value={user.completedLate}
-                color="text-warning"
-              />
-              <DetailStat
-                label="In Progress"
-                value={user.inProgress}
-                color="text-info"
-              />
-              <DetailStat
-                label="Pending"
-                value={user.pending}
-                color="text-warning"
-              />
-              <DetailStat
-                label="Overdue"
-                value={user.overdue}
-                color="text-error"
-              />
-              <DetailStat
-                label="High Priority"
-                value={user.highPriority}
-                color="text-error"
-              />
-              <DetailStat
-                label="Med Priority"
-                value={user.mediumPriority}
-                color="text-warning"
-              />
-              <DetailStat
-                label="Low Priority"
-                value={user.lowPriority}
-                color="text-info"
-              />
-              <DetailStat
-                label="Completion %"
-                value={`${user.completionRate.toFixed(1)}%`}
-                color="text-primary"
-              />
-              <DetailStat
-                label="On-Time %"
-                value={`${user.onTimeRate.toFixed(1)}%`}
-                color="text-success"
-              />
-            </div>
+          <td colSpan={8} className="bg-base-200/50 px-3 sm:px-6 py-5 border-t border-base-200">
+            <div className="space-y-4">
+              {/* Header Insights & Tags */}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-base-content/70">Activity Insights:</span>
+                  {user.insights && user.insights.length > 0 ? (
+                    user.insights.map((ins, i) => (
+                      <span
+                        key={i}
+                        className={`badge badge-sm gap-1 ${
+                          ins.type === 'success'
+                            ? 'badge-success text-success-content'
+                            : ins.type === 'info'
+                              ? 'badge-info text-info-content'
+                              : ins.type === 'error'
+                                ? 'badge-error text-error-content'
+                                : 'badge-ghost'
+                        }`}
+                      >
+                        <span>{ins.icon}</span>
+                        <span>{ins.text}</span>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-base-content/50">No activity logged</span>
+                  )}
+                </div>
 
-            {/* Progress bars on mobile */}
-            <div className="mt-3 space-y-2 md:hidden">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Completion Rate</span>
-                  <span>{user.completionRate.toFixed(1)}%</span>
+                <div className="text-xs text-base-content/60">
+                  Rank: <span className="font-bold text-base-content">#{user.rank}</span>
                 </div>
-                <ProgressBar value={user.completionRate} color="bg-primary" />
               </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>On-Time Rate</span>
-                  <span>{user.onTimeRate.toFixed(1)}%</span>
+
+              {/* Status Breakdown Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
+                <DetailStat
+                  label="Assigned"
+                  value={user.assigned}
+                  color="text-base-content"
+                />
+                <DetailStat
+                  label="Completed"
+                  value={user.completed}
+                  color="text-success"
+                />
+                <DetailStat
+                  label="On Time"
+                  value={user.completedOnTime}
+                  color="text-success"
+                  sub={`${user.completedEarly || 0} early`}
+                />
+                <DetailStat
+                  label="Late"
+                  value={user.completedLate}
+                  color="text-warning"
+                />
+                <DetailStat
+                  label="In Progress"
+                  value={user.inProgress}
+                  color="text-info"
+                />
+                <DetailStat
+                  label="Pending"
+                  value={user.pending}
+                  color="text-base-content/60"
+                />
+                <DetailStat
+                  label="Overdue"
+                  value={user.overdue}
+                  color={user.overdue > 0 ? 'text-error' : 'text-base-content/40'}
+                />
+                <DetailStat
+                  label="Score"
+                  value={user.assigned > 0 ? `${user.score.toFixed(1)}` : '—'}
+                  color={user.gradeColor === 'success' ? 'text-success' : 'text-primary'}
+                />
+              </div>
+
+              {/* Priority & Work Quality Analysis */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-base-100 p-4 rounded-xl border border-base-200">
+                {/* High Priority */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold flex items-center gap-1 text-error">
+                      <span className="w-2 h-2 rounded-full bg-error"></span>
+                      High Priority
+                    </span>
+                    <span className="font-bold">
+                      {user.highPriorityCompleted}/{user.highPriority} done
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={
+                      user.highPriority > 0
+                        ? (user.highPriorityCompleted / user.highPriority) * 100
+                        : 0
+                    }
+                    color="bg-error"
+                  />
                 </div>
-                <ProgressBar value={user.onTimeRate} color="bg-success" />
+
+                {/* Medium Priority */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold flex items-center gap-1 text-warning">
+                      <span className="w-2 h-2 rounded-full bg-warning"></span>
+                      Medium Priority
+                    </span>
+                    <span className="font-bold">
+                      {user.mediumPriorityCompleted}/{user.mediumPriority} done
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={
+                      user.mediumPriority > 0
+                        ? (user.mediumPriorityCompleted / user.mediumPriority) * 100
+                        : 0
+                    }
+                    color="bg-warning"
+                  />
+                </div>
+
+                {/* Low Priority */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold flex items-center gap-1 text-info">
+                      <span className="w-2 h-2 rounded-full bg-info"></span>
+                      Low Priority
+                    </span>
+                    <span className="font-bold">
+                      {user.lowPriorityCompleted}/{user.lowPriority} done
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={
+                      user.lowPriority > 0
+                        ? (user.lowPriorityCompleted / user.lowPriority) * 100
+                        : 0
+                    }
+                    color="bg-info"
+                  />
+                </div>
               </div>
             </div>
           </td>
@@ -251,28 +362,22 @@ function StaffRow({ user, index }) {
   );
 }
 
-function DetailStat({ label, value, color }) {
-  return (
-    <div className="bg-base-100 rounded-lg p-2 text-center shadow-sm">
-      <p className={`text-lg font-bold ${color}`}>{value}</p>
-      <p className="text-[10px] text-base-content/50 mt-0.5">{label}</p>
-    </div>
-  );
-}
-
-/* ── Main content ── */
+/* ── Main Performance Content ── */
 function PerformanceContent() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'attention', 'unassigned'
+  const [roleFilter, setRoleFilter] = useState('staff'); // 'staff' or 'all'
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [roleFilter]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/performance');
+      const res = await fetch(`/api/performance?role=${roleFilter}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const json = await res.json();
       setData(json);
@@ -283,19 +388,45 @@ function PerformanceContent() {
     }
   };
 
+  // Filter and Search logic
+  const filteredData = useMemo(() => {
+    return data.filter(user => {
+      const matchSearch =
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!matchSearch) return false;
+
+      if (activeTab === 'top') {
+        return user.score >= 75 && user.assigned > 0;
+      }
+      if (activeTab === 'attention') {
+        return user.overdue > 0 || (user.score < 60 && user.assigned > 0);
+      }
+      if (activeTab === 'unassigned') {
+        return user.assigned === 0;
+      }
+
+      return true;
+    });
+  }, [data, searchTerm, activeTab]);
+
   // Aggregate metrics
   const totalStaff = data.length;
   const activeStaff = data.filter(u => u.assigned > 0).length;
   const avgCompletion =
-    totalStaff > 0
-      ? data.reduce((s, u) => s + u.completionRate, 0) / totalStaff
+    activeStaff > 0
+      ? data.filter(u => u.assigned > 0).reduce((s, u) => s + u.completionRate, 0) / activeStaff
       : 0;
   const avgOnTime =
-    totalStaff > 0
-      ? data.reduce((s, u) => s + u.onTimeRate, 0) / totalStaff
+    activeStaff > 0
+      ? data.filter(u => u.completed > 0).reduce((s, u) => s + u.onTimeRate, 0) /
+        (data.filter(u => u.completed > 0).length || 1)
       : 0;
   const avgScore =
-    totalStaff > 0 ? data.reduce((s, u) => s + u.score, 0) / totalStaff : 0;
+    activeStaff > 0
+      ? data.filter(u => u.assigned > 0).reduce((s, u) => s + u.score, 0) / activeStaff
+      : 0;
   const totalOverdue = data.reduce((s, u) => s + u.overdue, 0);
 
   return (
@@ -303,123 +434,170 @@ function PerformanceContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Performance Evaluation
+          <h1 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-2">
+            <span>Performance Evaluation & Leaderboard</span>
+            <span className="badge badge-primary badge-sm font-normal">Live Analytics</span>
           </h1>
           <p className="text-sm text-base-content/60 mt-1">
-            Staff performance metrics — click any row to expand details
+            Comprehensive analysis of task volume, timeliness, priority handling, and execution discipline
           </p>
         </div>
-        <button
-          onClick={fetchData}
-          className="btn btn-ghost btn-sm sm:btn-md"
-          disabled={loading}
-        >
-          <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            className="select select-sm select-bordered"
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+          >
+            <option value="staff">Staff Only</option>
+            <option value="all">All Members</option>
+          </select>
+          <button
+            onClick={fetchData}
+            className="btn btn-ghost btn-sm"
+            disabled={loading}
+          >
+            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
-            label: 'Avg Completion',
+            label: 'Avg Completion Rate',
             value: `${avgCompletion.toFixed(1)}%`,
             icon: FiTrendingUp,
             color: 'text-primary',
+            desc: `${activeStaff} active staff members`,
           },
           {
-            label: 'Avg On-Time',
+            label: 'Avg On-Time Rate',
             value: `${avgOnTime.toFixed(1)}%`,
             icon: FiClock,
             color: 'text-success',
+            desc: 'On-time completion ratio',
           },
           {
-            label: 'Avg Score',
-            value: avgScore.toFixed(1),
+            label: 'Avg Performance Score',
+            value: `${avgScore.toFixed(1)}/100`,
             icon: FiAward,
             color: 'text-warning',
+            desc: 'Out of 100 points scale',
           },
           {
-            label: 'Total Overdue',
+            label: 'Total Overdue Tasks',
             value: totalOverdue,
             icon: FiAlertCircle,
             color: 'text-error',
+            desc: totalOverdue > 0 ? 'Requires attention' : 'All tasks on track',
           },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft hover:-translate-y-0.5 transition-all">
+        ].map(({ label, value, icon: Icon, color, desc }) => (
+          <div
+            key={label}
+            className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft hover:-translate-y-0.5 transition-all"
+          >
             <div className="card-body p-3.5 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-base-content/60">{label}</p>
+                  <p className="text-xs font-semibold text-base-content/60">{label}</p>
                   {loading ? (
-                    <div className="skeleton h-8 w-16 mt-1" />
+                    <div className="skeleton h-8 w-20 mt-1" />
                   ) : (
-                    <p
-                      className={`text-2xl sm:text-3xl font-bold mt-1 ${color}`}
-                    >
+                    <p className={`text-2xl sm:text-3xl font-extrabold mt-1 ${color}`}>
                       {value}
                     </p>
                   )}
+                  <p className="text-[11px] text-base-content/50 mt-1">{desc}</p>
                 </div>
-                <Icon
-                  className={`w-8 h-8 sm:w-10 sm:h-10 opacity-15 ${color}`}
-                />
+                <div className={`p-3 rounded-2xl bg-base-200/60 ${color}`}>
+                  <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Leaderboard Table */}
+      {/* Leaderboard & Evaluation Table Container */}
       <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
-        <div className="card-body p-3 sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <FiAward className="w-5 h-5 text-warning" />
-            <h2 className="card-title text-base sm:text-lg">
-              Performance Leaderboard
-            </h2>
-            {!loading && (
-              <span className="badge badge-ghost badge-sm ml-auto">
-                {activeStaff}/{totalStaff} active
-              </span>
-            )}
+        <div className="card-body p-3 sm:p-5 space-y-4">
+          {/* Controls: Search, Tabs & Count */}
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+            {/* Filter Tabs */}
+            <div className="tabs tabs-boxed bg-base-200/80 p-1 rounded-xl">
+              <button
+                className={`tab tab-sm font-medium ${activeTab === 'all' ? 'tab-active font-bold' : ''}`}
+                onClick={() => setActiveTab('all')}
+              >
+                All ({data.length})
+              </button>
+              <button
+                className={`tab tab-sm font-medium ${activeTab === 'top' ? 'tab-active font-bold' : ''}`}
+                onClick={() => setActiveTab('top')}
+              >
+                Top Performers
+              </button>
+              <button
+                className={`tab tab-sm font-medium ${activeTab === 'attention' ? 'tab-active font-bold' : ''}`}
+                onClick={() => setActiveTab('attention')}
+              >
+                Needs Attention {totalOverdue > 0 && `(${totalOverdue})`}
+              </button>
+              <button
+                className={`tab tab-sm font-medium ${activeTab === 'unassigned' ? 'tab-active font-bold' : ''}`}
+                onClick={() => setActiveTab('unassigned')}
+              >
+                Unassigned
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full md:w-72">
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Search staff by name or email..."
+                className="input input-sm input-bordered w-full pl-9 pr-4 rounded-xl"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
+          {/* Table */}
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-3 py-4">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="skeleton h-16 w-full" />
+                <div key={i} className="skeleton h-16 w-full rounded-xl" />
               ))}
             </div>
-          ) : data.length === 0 ? (
+          ) : filteredData.length === 0 ? (
             <div className="text-center py-12">
               <FiUsers className="mx-auto w-12 h-12 text-base-content/20 mb-3" />
-              <p className="text-base-content/60">No staff members found</p>
+              <p className="text-base-content/60 font-semibold">No staff members found</p>
               <p className="text-sm text-base-content/40 mt-1">
-                Add staff members and assign tasks to see performance data
+                Try adjusting your search or assign tasks to see performance data
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="table table-sm sm:table-md">
                 <thead>
-                  <tr className="text-xs sm:text-sm">
-                    <th className="text-center">Rank</th>
+                  <tr className="text-xs sm:text-sm text-base-content/70">
+                    <th className="text-center w-12">Rank</th>
                     <th>Staff Member</th>
                     <th className="text-center">Tasks</th>
                     <th className="hidden md:table-cell">Completion</th>
                     <th className="hidden lg:table-cell">On-Time</th>
-                    <th className="text-center hidden sm:table-cell">
-                      Overdue
-                    </th>
-                    <th>Score</th>
-                    <th></th>
+                    <th className="text-center hidden sm:table-cell">Overdue</th>
+                    <th>Score & Grade</th>
+                    <th className="w-8"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((user, i) => (
+                  {filteredData.map((user, i) => (
                     <StaffRow key={user.uid} user={user} index={i} />
                   ))}
                 </tbody>
@@ -429,48 +607,65 @@ function PerformanceContent() {
         </div>
       </div>
 
-      {/* Score Formula */}
+      {/* 100-Point Score Formula Explanation */}
       <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
         <div className="card-body p-4 sm:p-6">
-          <h3 className="font-bold text-base sm:text-lg mb-4">
-            Score Calculation Formula
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-2 mb-4">
+            <FiZap className="w-5 h-5 text-warning" />
+            <h3 className="font-extrabold text-base sm:text-lg">
+              100-Point Scoring Model (Evaluation Formula)
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
-                weight: '+60%',
-                label: 'Completion Rate',
-                desc: 'Completed tasks ÷ Assigned tasks',
+                weight: '40%',
+                label: 'Task Completion Rate',
+                desc: 'Ratio of completed tasks to assigned tasks',
                 color: 'badge-primary',
               },
               {
-                weight: '+30%',
-                label: 'On-Time Rate',
-                desc: 'On-time completions ÷ Total completions',
+                weight: '35%',
+                label: 'On-Time Delivery Rate',
+                desc: 'Ratio of tasks completed on or before deadline',
                 color: 'badge-success',
               },
               {
-                weight: '−10%',
-                label: 'Overdue Penalty',
-                desc: 'Overdue tasks ÷ Assigned tasks',
-                color: 'badge-error',
+                weight: '15%',
+                label: 'Priority & Complexity',
+                desc: 'Weighted score of completed High (3x) and Medium (2x) priority tasks',
+                color: 'badge-info',
+              },
+              {
+                weight: '10%',
+                label: 'Discipline & Punctuality',
+                desc: 'Full 10 points bonus if 0 overdue; deducted if overdue tasks exist',
+                color: 'badge-warning',
               },
             ].map(({ weight, label, desc, color }) => (
-              <div key={label} className="flex items-start gap-3">
-                <span className={`badge ${color} badge-lg flex-shrink-0`}>
+              <div key={label} className="p-3 bg-base-200/50 rounded-xl border border-base-200">
+                <span className={`badge ${color} badge-md font-bold mb-2`}>
                   {weight}
                 </span>
-                <div>
-                  <p className="font-semibold text-sm">{label}</p>
-                  <p className="text-xs text-base-content/60 mt-0.5">{desc}</p>
-                </div>
+                <p className="font-bold text-sm text-base-content">{label}</p>
+                <p className="text-xs text-base-content/60 mt-1">{desc}</p>
               </div>
             ))}
           </div>
-          <div className="mt-4 p-3 bg-base-200 rounded-lg text-xs text-base-content/60">
-            <strong>Grade:</strong>&nbsp; ≥90 = Excellent &nbsp;|&nbsp; ≥75 =
-            Good &nbsp;|&nbsp; ≥60 = Average &nbsp;|&nbsp; ≥40 = Below Average
-            &nbsp;|&nbsp; &lt;40 = Needs Improvement
+
+          <div className="mt-4 p-3.5 bg-base-200/70 rounded-xl text-xs text-base-content/70 flex flex-wrap gap-x-4 gap-y-2 justify-between items-center">
+            <div>
+              <strong>Grading Scale:</strong>&nbsp; 
+              <span className="text-success font-semibold">≥90 = Excellent</span> &nbsp;|&nbsp; 
+              <span className="text-info font-semibold">≥75 = Good</span> &nbsp;|&nbsp; 
+              <span className="text-warning font-semibold">≥60 = Average</span> &nbsp;|&nbsp; 
+              <span className="text-warning font-semibold">≥40 = Below Average</span> &nbsp;|&nbsp; 
+              <span className="text-error font-semibold">&lt;40 = Needs Improvement</span>
+            </div>
+            <div className="text-[11px] text-base-content/50">
+              *Ties are broken automatically based on completed task volume and high-priority completions.
+            </div>
           </div>
         </div>
       </div>

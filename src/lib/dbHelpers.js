@@ -227,36 +227,19 @@ export async function getTaskStatistics() {
  */
 export async function getUserPerformance(userId) {
   const db = await getDatabase();
+  const user = await db.collection('users').findOne({ uid: userId });
+  if (!user) {
+    return {
+      assigned: 0,
+      completed: 0,
+      completedOnTime: 0,
+      overdue: 0,
+      completionRate: 0,
+      onTimeRate: 0,
+      score: 0,
+    };
+  }
 
-  const assigned = await db
-    .collection('tasks')
-    .countDocuments({ assignee: userId });
-  const completed = await db.collection('tasks').countDocuments({
-    assignee: userId,
-    status: 'completed',
-  });
-
-  const completedOnTime = await db.collection('tasks').countDocuments({
-    assignee: userId,
-    status: 'completed',
-    $expr: { $lte: ['$completedAt', '$dueDate'] },
-  });
-
-  const overdue = await db.collection('tasks').countDocuments({
-    assignee: userId,
-    status: { $ne: 'completed' },
-    dueDate: { $lt: new Date() },
-  });
-
-  const completionRate = assigned > 0 ? (completed / assigned) * 100 : 0;
-  const onTimeRate = completed > 0 ? (completedOnTime / completed) * 100 : 0;
-
-  return {
-    assigned,
-    completed,
-    completedOnTime,
-    overdue,
-    completionRate: Math.round(completionRate * 100) / 100,
-    onTimeRate: Math.round(onTimeRate * 100) / 100,
-  };
+  const { calculateUserPerformance } = await import('./performanceCalculator');
+  return await calculateUserPerformance(db, user);
 }
