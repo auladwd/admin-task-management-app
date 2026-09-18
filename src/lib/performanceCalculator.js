@@ -14,6 +14,34 @@
  */
 
 /**
+ * Returns the end-of-day cutoff for a given due date.
+ * When a task due date is specified like '2026-09-18', the task is due
+ * by the end of that calendar day. Timezone differences (e.g. UTC midnight being 06:00 AM local)
+ * should not cause tasks completed on the same date to be flagged as late.
+ */
+function getEndOfDueDate(dueDate) {
+  if (!dueDate) return null;
+  const d = new Date(dueDate);
+  if (isNaN(d.getTime())) return null;
+
+  // Compute both UTC end-of-day and Local end-of-day, taking the latest cutoff
+  // so the employee is given the full calendar day in both UTC and local timezone.
+  const utcEndOfDay = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999),
+  );
+  const localEndOfDay = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  return new Date(Math.max(utcEndOfDay.getTime(), localEndOfDay.getTime()));
+}
+
+/**
  * Calculate comprehensive performance metrics for a single user.
  * @param {object} db - MongoDB database instance
  * @param {object} user - User document { uid, name, email, role, ... }
@@ -43,7 +71,7 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
   const pending = tasks.filter(t => t.status === 'pending').length;
 
   // On-time completion verification:
-  // Must be completed, must have a valid completedAt date, and completedAt <= dueDate
+  // Must be completed, must have a valid completedAt date, and completedAt <= endOfDueDate
   let completedOnTime = 0;
   let completedEarly = 0; // Completed at least 4 hours before deadline
   let completedLate = 0;
@@ -52,12 +80,12 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     if (t.status === 'completed') {
       if (t.completedAt && t.dueDate) {
         const completedDate = new Date(t.completedAt);
-        const dueDate = new Date(t.dueDate);
-        if (!isNaN(completedDate.getTime()) && !isNaN(dueDate.getTime())) {
-          if (completedDate <= dueDate) {
+        const deadline = getEndOfDueDate(t.dueDate);
+        if (!isNaN(completedDate.getTime()) && deadline) {
+          if (completedDate <= deadline) {
             completedOnTime++;
             // Check if completed more than 4 hours ahead of deadline
-            if (dueDate.getTime() - completedDate.getTime() >= 4 * 60 * 60 * 1000) {
+            if (deadline.getTime() - completedDate.getTime() >= 4 * 60 * 60 * 1000) {
               completedEarly++;
             }
           } else {
@@ -74,12 +102,12 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     }
   });
 
-  // Overdue tasks: Not completed AND past due date
+  // Overdue tasks: Not completed AND past due date end-of-day
   const overdue = tasks.filter(t => {
     if (t.status === 'completed') return false;
     if (!t.dueDate) return false;
-    const due = new Date(t.dueDate);
-    return !isNaN(due.getTime()) && due < now;
+    const deadline = getEndOfDueDate(t.dueDate);
+    return deadline && deadline < now;
   }).length;
 
   // Priority Breakdown (Assigned & Completed)

@@ -111,7 +111,7 @@ function StaffRow({ user, index }) {
       >
         {/* Rank */}
         <td className="text-center text-lg sm:text-xl font-bold w-12">
-          {rankIcon(index)}
+          {rankIcon(user.rank ? user.rank - 1 : index)}
         </td>
 
         {/* Name & Role */}
@@ -369,6 +369,8 @@ function PerformanceContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'attention', 'unassigned'
   const [roleFilter, setRoleFilter] = useState('staff'); // 'staff' or 'all'
+  const [sortBy, setSortBy] = useState('rank'); // 'rank', 'name', 'completed', 'completionRate', 'onTimeRate', 'overdue', 'score'
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
 
   useEffect(() => {
     fetchData();
@@ -388,9 +390,23 @@ function PerformanceContent() {
     }
   };
 
-  // Filter and Search logic
+  const handleSort = field => {
+    if (sortBy === field) {
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      // For performance metrics, default to highest first ('desc')
+      if (['tasks', 'completed', 'completionRate', 'onTimeRate', 'score'].includes(field)) {
+        setSortOrder('desc');
+      } else {
+        setSortOrder('asc');
+      }
+    }
+  };
+
+  // Filter and Sort logic
   const filteredData = useMemo(() => {
-    return data.filter(user => {
+    const list = data.filter(user => {
       const matchSearch =
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -409,7 +425,51 @@ function PerformanceContent() {
 
       return true;
     });
-  }, [data, searchTerm, activeTab]);
+
+    list.sort((a, b) => {
+      let valA, valB;
+      switch (sortBy) {
+        case 'name':
+          valA = (a.name || '').toLowerCase();
+          valB = (b.name || '').toLowerCase();
+          return sortOrder === 'asc'
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        case 'tasks':
+        case 'completed':
+          valA = a.completed;
+          valB = b.completed;
+          break;
+        case 'completionRate':
+          valA = a.completionRate;
+          valB = b.completionRate;
+          break;
+        case 'onTimeRate':
+          valA = a.onTimeRate;
+          valB = b.onTimeRate;
+          break;
+        case 'overdue':
+          valA = a.overdue;
+          valB = b.overdue;
+          break;
+        case 'score':
+          valA = a.score;
+          valB = b.score;
+          break;
+        case 'rank':
+        default:
+          valA = a.rank || 9999;
+          valB = b.rank || 9999;
+          break;
+      }
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      // Secondary tie-breaker by completed tasks
+      return (b.completed || 0) - (a.completed || 0);
+    });
+
+    return list;
+  }, [data, searchTerm, activeTab, sortBy, sortOrder]);
 
   // Aggregate metrics
   const totalStaff = data.length;
@@ -586,13 +646,83 @@ function PerformanceContent() {
               <table className="table table-sm sm:table-md">
                 <thead>
                   <tr className="text-xs sm:text-sm text-base-content/70">
-                    <th className="text-center w-12">Rank</th>
-                    <th>Staff Member</th>
-                    <th className="text-center">Tasks</th>
-                    <th className="hidden md:table-cell">Completion</th>
-                    <th className="hidden lg:table-cell">On-Time</th>
-                    <th className="text-center hidden sm:table-cell">Overdue</th>
-                    <th>Score & Grade</th>
+                    <th
+                      className="text-center w-14 cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('rank')}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span>Rank</span>
+                        {sortBy === 'rank' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Staff Member</span>
+                        {sortBy === 'name' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="text-center cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('completed')}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span>Tasks</span>
+                        {sortBy === 'completed' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="hidden md:table-cell cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('completionRate')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Completion</span>
+                        {sortBy === 'completionRate' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="hidden lg:table-cell cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('onTimeRate')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>On-Time</span>
+                        {sortBy === 'onTimeRate' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="text-center hidden sm:table-cell cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('overdue')}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span>Overdue</span>
+                        {sortBy === 'overdue' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="cursor-pointer select-none hover:text-primary transition-colors"
+                      onClick={() => handleSort('score')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Score & Grade</span>
+                        {sortBy === 'score' && (
+                          <span className="text-[10px] text-primary">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
                     <th className="w-8"></th>
                   </tr>
                 </thead>
