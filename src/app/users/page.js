@@ -124,97 +124,91 @@ function UsersContent() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-6 max-w-7xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-base-content/70 mt-1">
-            Manage user accounts and roles
+          <h1 className="text-2xl sm:text-3xl font-bold">User Management</h1>
+          <p className="text-xs sm:text-sm text-base-content/70 mt-1">
+            Manage user accounts, privileges, and task creation permissions
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={fetchUsers}
-            className="btn btn-ghost"
+            className="btn btn-ghost btn-sm sm:btn-md flex-1 sm:flex-initial"
             disabled={loading}
           >
-            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-            Refresh
+            <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden xs:inline">Refresh</span>
           </button>
 
-          <button onClick={handleAddUser} className="btn btn-primary">
-            <FiPlus />
-            Add New User
+          <button onClick={handleAddUser} className="btn btn-primary btn-sm sm:btn-md flex-1 sm:flex-initial">
+            <FiPlus className="w-4 h-4" />
+            <span>Add User</span>
           </button>
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Content Container */}
       <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
-        <div className="card-body p-4 sm:p-6">
+        <div className="card-body p-3.5 sm:p-6">
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="skeleton h-16 w-full"></div>
+                <div key={i} className="skeleton h-16 w-full rounded-xl"></div>
               ))}
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-12">
-              <FiUser className="mx-auto text-6xl text-base-content/30 mb-4" />
-              <p className="text-base-content/70 mb-4">No users found</p>
-              <button onClick={handleAddUser} className="btn btn-primary">
-                <FiPlus />
+              <FiUser className="mx-auto text-5xl sm:text-6xl text-base-content/30 mb-4" />
+              <p className="text-base-content/70 font-semibold mb-3">No users found</p>
+              <button onClick={handleAddUser} className="btn btn-primary btn-sm">
+                <FiPlus className="w-4 h-4" />
                 Add First User
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table table-zebra">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th className="text-center">Can Create Task</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.userId}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="avatar placeholder">
-                            <div className="bg-primary text-primary-content rounded-full w-10">
-                              <span>{user.name?.charAt(0).toUpperCase()}</span>
-                            </div>
+            <>
+              {/* ── Mobile Card List (< md) ── */}
+              <div className="block md:hidden space-y-3">
+                {users.map(user => (
+                  <div
+                    key={user.userId}
+                    className="p-3.5 bg-base-200/50 border border-base-300 rounded-xl space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="avatar placeholder flex-shrink-0">
+                          <div className="bg-primary text-primary-content rounded-full w-9 h-9 font-bold">
+                            <span>{user.name?.charAt(0).toUpperCase()}</span>
                           </div>
-                          <span className="font-semibold">{user.name}</span>
                         </div>
-                      </td>
-                      <td>{user.email}</td>
-                      <td>
-                        <span className={`badge ${getRoleBadge(user.role)}`}>
-                          {getRoleLabel(user.role)}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`badge badge-sm ${user.isActive !== false ? 'badge-success' : 'badge-error'}`}
-                        >
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm truncate text-base-content">{user.name}</p>
+                          <p className="text-xs text-base-content/60 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <span className={`badge badge-sm font-semibold flex-shrink-0 ${getRoleBadge(user.role)}`}>
+                        {getRoleLabel(user.role)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-base-300/60">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base-content/60">Status:</span>
+                        <span className={`badge badge-xs font-semibold ${user.isActive !== false ? 'badge-success' : 'badge-error'}`}>
                           {user.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
-                      </td>
-                      {/* Can Create Task toggle — only for staff */}
-                      <td className="text-center">
-                        {user.role === 'staff' ? (
+                      </div>
+
+                      {user.role === 'staff' && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-base-content/60 text-[11px]">Can Create Task:</span>
                           <input
                             type="checkbox"
-                            className="toggle toggle-primary toggle-sm"
+                            className="toggle toggle-primary toggle-xs"
                             checked={user.canCreateTask !== false}
                             onChange={() => handleToggleCreateTask(user)}
                             title={
@@ -223,37 +217,122 @@ function UsersContent() {
                                 : 'Click to enable task creation'
                             }
                           />
-                        ) : (
-                          <span className="text-xs text-base-content/30">
-                            —
-                          </span>
-                        )}
-                      </td>
-                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className="btn btn-ghost btn-sm"
-                            title="Edit User"
-                          >
-                            <FiEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user)}
-                            className="btn btn-ghost btn-sm text-error"
-                            title="Delete User"
-                            disabled={user.userId === userProfile?.uid}
-                          >
-                            <FiTrash2 />
-                          </button>
                         </div>
-                      </td>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-base-300/60 text-xs">
+                      <span className="text-base-content/40 text-[11px]">
+                        Joined: {new Date(user.createdAt).toLocaleDateString()}
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="btn btn-ghost btn-xs btn-circle text-primary hover:bg-primary/10"
+                          title="Edit User"
+                        >
+                          <FiEdit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
+                          title="Delete User"
+                          disabled={user.userId === userProfile?.uid}
+                        >
+                          <FiTrash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Desktop Table (>= md) ── */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table table-zebra w-full text-sm">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wider text-base-content/60 border-b border-base-300">
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th className="text-center">Can Create Task</th>
+                      <th>Created</th>
+                      <th className="text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.map(user => (
+                      <tr key={user.userId}>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar placeholder flex-shrink-0">
+                              <div className="bg-primary text-primary-content rounded-full w-9 h-9">
+                                <span>{user.name?.charAt(0).toUpperCase()}</span>
+                              </div>
+                            </div>
+                            <span className="font-semibold">{user.name}</span>
+                          </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>
+                          <span className={`badge badge-sm font-semibold ${getRoleBadge(user.role)}`}>
+                            {getRoleLabel(user.role)}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge badge-sm font-semibold ${user.isActive !== false ? 'badge-success' : 'badge-error'}`}
+                          >
+                            {user.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        {/* Can Create Task toggle — only for staff */}
+                        <td className="text-center">
+                          {user.role === 'staff' ? (
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-primary toggle-sm"
+                              checked={user.canCreateTask !== false}
+                              onChange={() => handleToggleCreateTask(user)}
+                              title={
+                                user.canCreateTask !== false
+                                  ? 'Click to disable task creation'
+                                  : 'Click to enable task creation'
+                              }
+                            />
+                          ) : (
+                            <span className="text-xs text-base-content/30">
+                              —
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-xs">{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="btn btn-ghost btn-xs btn-circle text-primary hover:bg-primary/10"
+                              title="Edit User"
+                            >
+                              <FiEdit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user)}
+                              className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
+                              title="Delete User"
+                              disabled={user.userId === userProfile?.uid}
+                            >
+                              <FiTrash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -388,11 +467,11 @@ function UserModal({ isOpen, onClose, onSuccess, user = null }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-lg w-full">
+    <div className="modal modal-open p-2 sm:p-4">
+      <div className="modal-box w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-lg">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-base-200">
+          <h3 className="font-bold text-base sm:text-lg">
             {isEditMode ? 'Edit User' : 'Add New User'}
           </h3>
           <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">

@@ -115,14 +115,14 @@ export default function Sidebar() {
       {/* Sidebar Container */}
       <aside
         className={`
-          fixed lg:sticky top-0 left-0 h-screen w-72 sm:w-80 lg:w-64
+          fixed lg:sticky top-0 left-0 h-screen w-72 sm:w-80 lg:w-64 max-w-[85vw]
           bg-base-100/95 lg:bg-base-100 border-r border-base-300/80
           flex flex-col z-40 transition-all duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0 shadow-none'}
         `}
       >
         {/* Brand Header */}
-        <div className="h-20 px-5 flex items-center border-b border-base-300/80 flex-shrink-0">
+        <div className="h-16 sm:h-20 px-4 sm:px-5 flex items-center border-b border-base-300/80 flex-shrink-0">
           <div className="flex items-center gap-3 w-full">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white shadow-soft font-bold text-lg flex-shrink-0">
               TM

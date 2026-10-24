@@ -329,16 +329,16 @@ function NoteModal({ note, onClose, onSave }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-base-300/50">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-base-300/50">
           {/* Color picker */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {COLORS.map(c => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setField('color', c.id)}
                 title={c.label}
-                className={`w-5 h-5 rounded-full border-2 transition-transform ${c.dot} ${form.color === c.id ? 'border-primary scale-125' : 'border-base-300 hover:scale-110'}`}
+                className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 transition-transform ${c.dot} ${form.color === c.id ? 'border-primary scale-125' : 'border-base-300 hover:scale-110'}`}
               />
             ))}
           </div>

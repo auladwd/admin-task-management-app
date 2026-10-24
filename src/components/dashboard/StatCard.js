@@ -52,20 +52,20 @@ export default function StatCard({
         ${style.borderAccent}
       `}
     >
-      <div className="card-body p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+      <div className="card-body p-3 xs:p-3.5 sm:p-5">
+        <div className="flex items-start justify-between gap-2 xs:gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-base-content/60 truncate">
+            <p className="text-[10px] xs:text-xs font-bold uppercase tracking-wider text-base-content/60 truncate">
               {title}
             </p>
             {loading ? (
-              <div className="skeleton h-9 w-20 mt-1 rounded-lg"></div>
+              <div className="skeleton h-7 sm:h-9 w-16 sm:w-20 mt-1 rounded-lg"></div>
             ) : (
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-base-content mt-1 tracking-tight truncate">
+              <h3 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-base-content mt-0.5 sm:mt-1 tracking-tight truncate">
                 {value}
               </h3>
             )}
-            <p className="text-xs text-base-content/60 mt-1 line-clamp-1">
+            <p className="text-[10px] xs:text-xs text-base-content/60 mt-0.5 sm:mt-1 line-clamp-1">
               {description}
             </p>
           </div>
@@ -73,12 +73,12 @@ export default function StatCard({
           {Icon && (
             <div
               className={`
-                w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center
+                w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center
                 bg-gradient-to-tr ${style.gradient} text-white shadow-soft-sm flex-shrink-0
                 group-hover:scale-105 transition-transform duration-200
               `}
             >
-              <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6" />
             </div>
           )}
         </div>

@@ -373,7 +373,7 @@ function ReportsContent() {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
               {[
                 {
                   label: 'Total Tasks',
@@ -398,10 +398,10 @@ function ReportsContent() {
               ].map(({ label, value, cls }) => (
                 <div
                   key={label}
-                  className="stat bg-base-200 rounded-xl p-3 sm:p-4"
+                  className="stat bg-base-200 rounded-xl p-2.5 sm:p-4"
                 >
-                  <div className="stat-title text-xs sm:text-sm">{label}</div>
-                  <div className={`stat-value text-2xl sm:text-3xl ${cls}`}>
+                  <div className="stat-title text-[11px] sm:text-sm">{label}</div>
+                  <div className={`stat-value text-xl sm:text-3xl ${cls}`}>
                     {value}
                   </div>
                 </div>
@@ -409,7 +409,7 @@ function ReportsContent() {
             </div>
 
             {/* Extra stats row */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
               {[
                 {
                   label: 'Pending',
@@ -427,9 +427,9 @@ function ReportsContent() {
                   cls: 'text-error',
                 },
               ].map(({ label, value, cls }) => (
-                <div key={label} className="stat bg-base-200 rounded-xl p-3">
-                  <div className="stat-title text-xs">{label}</div>
-                  <div className={`stat-value text-xl sm:text-2xl ${cls}`}>
+                <div key={label} className="stat bg-base-200 rounded-xl p-2 sm:p-3">
+                  <div className="stat-title text-[10px] sm:text-xs truncate">{label}</div>
+                  <div className={`stat-value text-lg sm:text-2xl ${cls}`}>
                     {value}
                   </div>
                 </div>

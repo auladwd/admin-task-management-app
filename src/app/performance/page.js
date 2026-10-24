@@ -495,19 +495,19 @@ function PerformanceContent() {
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-7xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold flex items-center gap-2 flex-wrap">
             <span>Performance Evaluation & Leaderboard</span>
             <span className="badge badge-primary badge-sm font-normal">Live Analytics</span>
           </h1>
-          <p className="text-sm text-base-content/60 mt-1">
+          <p className="text-xs sm:text-sm text-base-content/60 mt-1">
             Comprehensive analysis of task volume, timeliness, priority handling, and execution discipline
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
-            className="select select-sm select-bordered"
+            className="select select-sm select-bordered flex-1 sm:flex-initial"
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value)}
           >
@@ -526,7 +526,7 @@ function PerformanceContent() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {[
           {
             label: 'Avg Completion Rate',
@@ -561,21 +561,21 @@ function PerformanceContent() {
             key={label}
             className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft hover:-translate-y-0.5 transition-all"
           >
-            <div className="card-body p-3.5 sm:p-5">
+            <div className="card-body p-3 xs:p-3.5 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-base-content/60">{label}</p>
+                  <p className="text-[10px] xs:text-xs font-semibold text-base-content/60">{label}</p>
                   {loading ? (
-                    <div className="skeleton h-8 w-20 mt-1" />
+                    <div className="skeleton h-7 sm:h-8 w-16 sm:w-20 mt-1" />
                   ) : (
-                    <p className={`text-2xl sm:text-3xl font-extrabold mt-1 ${color}`}>
+                    <p className={`text-xl xs:text-2xl sm:text-3xl font-extrabold mt-0.5 sm:mt-1 ${color}`}>
                       {value}
                     </p>
                   )}
-                  <p className="text-[11px] text-base-content/50 mt-1">{desc}</p>
+                  <p className="text-[10px] sm:text-[11px] text-base-content/50 mt-1">{desc}</p>
                 </div>
-                <div className={`p-3 rounded-2xl bg-base-200/60 ${color}`}>
-                  <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                <div className={`p-2.5 sm:p-3 rounded-2xl bg-base-200/60 ${color}`}>
+                  <Icon className="w-5 h-5 sm:w-7 sm:h-7" />
                 </div>
               </div>
             </div>
@@ -589,27 +589,27 @@ function PerformanceContent() {
           {/* Controls: Search, Tabs & Count */}
           <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
             {/* Filter Tabs */}
-            <div className="tabs tabs-boxed bg-base-200/80 p-1 rounded-xl">
+            <div className="tabs tabs-boxed bg-base-200/80 p-1 rounded-xl flex-nowrap overflow-x-auto max-w-full">
               <button
-                className={`tab tab-sm font-medium ${activeTab === 'all' ? 'tab-active font-bold' : ''}`}
+                className={`tab tab-xs sm:tab-sm font-medium whitespace-nowrap ${activeTab === 'all' ? 'tab-active font-bold' : ''}`}
                 onClick={() => setActiveTab('all')}
               >
                 All ({data.length})
               </button>
               <button
-                className={`tab tab-sm font-medium ${activeTab === 'top' ? 'tab-active font-bold' : ''}`}
+                className={`tab tab-xs sm:tab-sm font-medium whitespace-nowrap ${activeTab === 'top' ? 'tab-active font-bold' : ''}`}
                 onClick={() => setActiveTab('top')}
               >
                 Top Performers
               </button>
               <button
-                className={`tab tab-sm font-medium ${activeTab === 'attention' ? 'tab-active font-bold' : ''}`}
+                className={`tab tab-xs sm:tab-sm font-medium whitespace-nowrap ${activeTab === 'attention' ? 'tab-active font-bold' : ''}`}
                 onClick={() => setActiveTab('attention')}
               >
                 Needs Attention {needsAttentionCount > 0 && `(${needsAttentionCount})`}
               </button>
               <button
-                className={`tab tab-sm font-medium ${activeTab === 'unassigned' ? 'tab-active font-bold' : ''}`}
+                className={`tab tab-xs sm:tab-sm font-medium whitespace-nowrap ${activeTab === 'unassigned' ? 'tab-active font-bold' : ''}`}
                 onClick={() => setActiveTab('unassigned')}
               >
                 Unassigned

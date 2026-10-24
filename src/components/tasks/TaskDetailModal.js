@@ -386,13 +386,13 @@ export default function TaskDetailModal({ isOpen, onClose, task, onUpdate }) {
   const attachmentsList = currentTask.attachments || [];
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-4xl max-h-[92vh] flex flex-col p-5 sm:p-7 bg-base-100 rounded-3xl shadow-2xl border border-base-200">
+    <div className="modal modal-open p-2 sm:p-4">
+      <div className="modal-box w-full max-w-4xl max-h-[92vh] flex flex-col p-3.5 sm:p-6 md:p-7 bg-base-100 rounded-2xl sm:rounded-3xl shadow-2xl border border-base-200">
         
         {/* ── Top Header ── */}
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-base-200">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-base-200">
           <div className="flex-1 min-w-0">
-            <h3 className="font-extrabold text-xl sm:text-2xl text-base-content tracking-tight mb-2.5 leading-snug">
+            <h3 className="font-extrabold text-lg sm:text-2xl text-base-content tracking-tight mb-2 leading-snug break-words">
               {currentTask.title}
             </h3>
 
@@ -1029,13 +1029,13 @@ export default function TaskDetailModal({ isOpen, onClose, task, onUpdate }) {
                   </div>
                 ) : (
                   // In Progress / Pending Status Bar
-                  <div className="bg-base-200/50 border border-base-300 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="bg-base-200/50 border border-base-300 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="font-bold text-sm text-base-content">কাজের স্ট্যাটাস পরিবর্তন</p>
                       <p className="text-xs text-base-content/50">বর্তমান স্ট্যাটাস: {formatStatus(currentTask.status)}</p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       {currentTask.status === 'pending' && (
                         <button
                           onClick={() => handleStatusChange('in_progress')}

@@ -95,14 +95,14 @@ export default function ImageLightbox({
       <div className="relative max-w-5xl max-h-[96vh] w-full flex flex-col items-center bg-base-100 rounded-2xl overflow-hidden shadow-2xl border border-base-300/40">
         
         {/* ── Top Header ── */}
-        <div className="w-full flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 bg-base-200/90 border-b border-base-300">
-          <div className="flex items-center gap-2 max-w-[55%] sm:max-w-[60%] min-w-0">
+        <div className="w-full flex items-center justify-between px-2.5 sm:px-5 py-2 sm:py-3 bg-base-200/90 border-b border-base-300 gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
             {isPdf ? (
-              <span className="badge badge-error badge-sm text-white font-bold gap-1 flex-shrink-0">
+              <span className="badge badge-error badge-xs sm:badge-sm text-white font-bold gap-1 flex-shrink-0">
                 <FiFileText className="w-3 h-3" /> PDF
               </span>
             ) : (
-              <span className="badge badge-primary badge-sm font-semibold gap-1 flex-shrink-0">
+              <span className="badge badge-primary badge-xs sm:badge-sm font-semibold gap-1 flex-shrink-0">
                 <FiImage className="w-3 h-3" /> Image
               </span>
             )}
@@ -114,7 +114,7 @@ export default function ImageLightbox({
             </h4>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* View Mode Switcher for PDF */}
             {isPdf && (
               <div className="join border border-base-300 rounded-lg overflow-hidden hidden sm:inline-flex">

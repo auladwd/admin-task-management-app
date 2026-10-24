@@ -161,11 +161,11 @@ export default function TaskModal({
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
+    <div className="modal modal-open p-2 sm:p-4">
+      <div className="modal-box w-full max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">
+        <div className="flex justify-between items-center mb-4 pb-2 border-b border-base-200">
+          <h3 className="font-bold text-base sm:text-lg">
             {isEditMode ? 'Edit Task' : 'Create New Task'}
           </h3>
           <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
@@ -274,18 +274,18 @@ export default function TaskModal({
             <label className="label">
               <span className="label-text">Priority *</span>
             </label>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               {['low', 'medium', 'high'].map(p => (
-                <label key={p} className="label cursor-pointer gap-2">
+                <label key={p} className="label cursor-pointer gap-2 bg-base-200/50 px-3 py-1.5 rounded-lg hover:bg-base-200 transition-colors">
                   <input
                     type="radio"
                     name="priority"
                     value={p}
-                    className="radio radio-primary"
+                    className="radio radio-primary radio-sm"
                     checked={formData.priority === p}
                     onChange={handleChange}
                   />
-                  <span className="label-text capitalize">{p}</span>
+                  <span className="label-text capitalize text-xs sm:text-sm font-medium">{p}</span>
                 </label>
               ))}
             </div>
@@ -398,11 +398,11 @@ export default function TaskModal({
                 Or add custom link manually
               </summary>
               <div className="collapse-content space-y-2 pt-1 pb-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     placeholder="Link title"
-                    className="input input-bordered input-xs flex-1"
+                    className="input input-bordered input-xs sm:input-sm flex-1"
                     value={newAttachment.name}
                     onChange={e =>
                       setNewAttachment({
@@ -414,7 +414,7 @@ export default function TaskModal({
                   <input
                     type="url"
                     placeholder="https://..."
-                    className="input input-bordered input-xs flex-1"
+                    className="input input-bordered input-xs sm:input-sm flex-1"
                     value={newAttachment.url}
                     onChange={e =>
                       setNewAttachment({
@@ -426,10 +426,10 @@ export default function TaskModal({
                   <button
                     type="button"
                     onClick={handleAddAttachment}
-                    className="btn btn-xs btn-primary"
+                    className="btn btn-xs sm:btn-sm btn-primary self-end sm:self-auto gap-1"
                     disabled={!newAttachment.name || !newAttachment.url}
                   >
-                    <FiPlus /> Add
+                    <FiPlus className="w-3.5 h-3.5" /> Add Link
                   </button>
                 </div>
               </div>

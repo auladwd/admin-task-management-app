@@ -20,12 +20,12 @@ export default function TaskFilters({
 
   return (
     <div className="card bg-base-100 border border-base-300/80 rounded-2xl shadow-soft">
-      <div className="card-body p-4 sm:p-5">
-        <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-base-content/60">
+      <div className="card-body p-3.5 sm:p-5">
+        <div className="flex items-center gap-2 mb-2.5 sm:mb-3 text-xs font-bold uppercase tracking-wider text-base-content/60">
           <FiFilter className="w-3.5 h-3.5 text-primary" /> Filter & Search
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Search Input */}
           <div className="form-control">
             <div className="relative flex items-center">

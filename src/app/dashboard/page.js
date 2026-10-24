@@ -63,24 +63,24 @@ function DashboardContent() {
     <MainLayout title="Dashboard">
       <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
         {/* Modern Welcome Hero Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-accent text-white p-5 sm:p-7 shadow-soft-md">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-indigo-600 to-accent text-white p-4 sm:p-6 md:p-7 shadow-soft-md">
           {/* Subtle background circles */}
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
           <div className="absolute top-0 right-1/4 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
 
-          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/15 px-2.5 py-0.5 rounded-full backdrop-blur-md">
+          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold bg-white/15 px-2 sm:px-2.5 py-0.5 rounded-full backdrop-blur-md">
                   <FiCalendar className="w-3 h-3" /> {todayFormatted}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/20 px-2.5 py-0.5 rounded-full backdrop-blur-md">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold bg-white/20 px-2 sm:px-2.5 py-0.5 rounded-full backdrop-blur-md">
                   {userProfile.role === 'super_admin' && '🛡️ Super Admin'}
                   {userProfile.role === 'team_leader' && '⭐ Team Leader'}
                   {userProfile.role === 'staff' && '💼 Staff Member'}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">
+              <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">
                 {getTimeGreeting()}, {userProfile.name}! 👋
               </h2>
               <p className="text-xs sm:text-sm text-white/80 mt-1 max-w-xl">
@@ -93,21 +93,21 @@ function DashboardContent() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-center">
+            <div className="flex items-center gap-2 self-start sm:self-center">
               <button
                 onClick={refresh}
-                className="btn btn-sm btn-ghost text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl gap-1.5 backdrop-blur-sm shadow-sm"
+                className="btn btn-xs sm:btn-sm btn-ghost text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl gap-1.5 backdrop-blur-sm shadow-sm"
                 title="Refresh dashboard"
               >
                 <FiRefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline text-xs font-semibold">Sync Data</span>
+                <span className="inline text-xs font-semibold">Sync</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Statistics Cards Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
           <div
             onClick={() => handleStatCardClick('all')}
             className="cursor-pointer"

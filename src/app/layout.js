@@ -1,12 +1,19 @@
 'use client';
 
-import { Inter } from 'next/font/google';
+import { Inter, Hind_Siliguri } from 'next/font/google';
 import './globals.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AppProviders from '@/components/providers/AppProviders';
 
 const inter = Inter({ subsets: ['latin'] });
+
+const hindSiliguri = Hind_Siliguri({
+  subsets: ['bengali'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-hind-siliguri',
+  display: 'swap',
+});
 
 export default function RootLayout({ children }) {
   return (
@@ -17,7 +24,7 @@ export default function RootLayout({ children }) {
         <title>Task Manager</title>
         <meta name="description" content="Team task management application" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${hindSiliguri.variable}`}>
         <AppProviders>
           {children}
           <ToastContainer

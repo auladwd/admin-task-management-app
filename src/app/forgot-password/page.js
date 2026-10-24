@@ -27,13 +27,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 bg-mesh-light relative overflow-hidden px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-base-200 bg-mesh-light relative overflow-hidden px-3 sm:px-4 py-6 sm:py-8">
       {/* Decorative background glow orbs */}
       <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent/20 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
-        <div className="glass-panel rounded-3xl p-6 sm:p-9 shadow-soft-lg border border-base-300/80 bg-base-100/90 backdrop-blur-xl">
+        <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 xs:p-6 sm:p-9 shadow-soft-lg border border-base-300/80 bg-base-100/90 backdrop-blur-xl">
           {/* Header */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-base-100 shadow-soft-sm ring-1 ring-base-300/80 mb-3.5">

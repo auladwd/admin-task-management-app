@@ -56,14 +56,14 @@ export default function DeveloperModal({ isOpen, onClose }) {
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-sm sm:max-w-md bg-base-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+      <div className="relative w-full max-w-sm sm:max-w-md bg-base-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 btn btn-ghost btn-circle btn-sm z-10"
+          className="absolute top-3 right-3 btn btn-ghost btn-circle btn-sm z-10 text-white/80 hover:text-white"
           aria-label="Close"
         >
-          <FiX className="w-8 h-8 text-white pt-2" />
+          <FiX className="w-5 h-5" />
         </button>
 
         {/* Header Banner */}

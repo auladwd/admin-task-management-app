@@ -78,20 +78,20 @@ export default function Navbar({ title = 'Dashboard' }) {
   };
 
   return (
-    <header className="glass-navbar sticky top-0 z-30 h-20 px-3 sm:px-6 flex items-center border-b border-base-300/80 transition-colors flex-shrink-0">
-      <div className="flex items-center justify-between w-full">
+    <header className="glass-navbar sticky top-0 z-30 h-16 sm:h-20 px-2 sm:px-6 flex items-center border-b border-base-300/80 transition-colors flex-shrink-0">
+      <div className="flex items-center justify-between w-full min-w-0 gap-1 sm:gap-2">
         {/* ── Left Placeholder / Spacer (balances right side & accommodates mobile menu button) ── */}
-        <div className="flex items-center justify-start flex-1 min-w-0">
-          <div className="w-9 sm:w-10 lg:w-0 flex-shrink-0" />
+        <div className="flex items-center justify-start flex-shrink-0 w-8 sm:w-10 lg:w-0">
+          <div className="w-8 sm:w-10 lg:w-0 flex-shrink-0" />
         </div>
 
         {/* ── Center: Logo + Organisation Name ── */}
-        <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-shrink-0 px-2">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-3 min-w-0 flex-1 px-1">
           <div className="relative flex-shrink-0">
             <img
               src="/org-logo.png"
               alt="Bangladesh Election Commission"
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain drop-shadow-sm transition-transform hover:scale-105"
+              className="h-7 w-7 xs:h-8 xs:w-8 sm:h-10 sm:w-10 object-contain drop-shadow-sm transition-transform hover:scale-105"
               onError={e => {
                 e.currentTarget.src = '/org-logo.svg';
                 e.currentTarget.onerror = null;
@@ -99,23 +99,23 @@ export default function Navbar({ title = 'Dashboard' }) {
             />
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 text-left">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-xs sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight truncate">
+              <span className="text-[11px] xs:text-xs sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight truncate">
                 IDEA PROJECT (2nd Phase)
               </span>
-              <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex-shrink-0">
                 <FiShield className="w-2.5 h-2.5" /> EC Official
               </span>
             </div>
-            <p className="text-[10px] sm:text-xs text-base-content/70 font-medium leading-tight truncate text-left">
+            <p className="text-[9px] xs:text-[10px] sm:text-xs text-base-content/70 font-medium leading-tight truncate hidden xs:block">
               Bangladesh Election Commission
             </p>
           </div>
         </div>
 
         {/* ── Right Side Actions ── */}
-        <div className="flex items-center justify-end gap-1 sm:gap-2.5 flex-1 min-w-0">
+        <div className="flex items-center justify-end gap-1 sm:gap-2.5 flex-shrink-0">
           {/* Dark / Light Mode Toggle */}
           <ThemeToggle />
 
@@ -132,7 +132,7 @@ export default function Navbar({ title = 'Dashboard' }) {
             >
               <FiBell className="w-4 h-4 sm:w-5 sm:h-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center px-1 leading-none shadow-sm animate-pulse">
+                <span className="absolute top-1 right-1 min-w-[16px] sm:min-w-[18px] h-4 sm:h-[18px] rounded-full bg-error text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center px-1 leading-none shadow-sm animate-pulse">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -140,7 +140,7 @@ export default function Navbar({ title = 'Dashboard' }) {
 
             {/* Dropdown Panel */}
             {open && (
-              <div className="absolute right-0 top-full mt-2.5 w-80 sm:w-96 bg-base-100 border border-base-300/80 rounded-2xl shadow-soft-lg z-50 overflow-hidden animate-fade-in">
+              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm bg-base-100 border border-base-300/80 rounded-2xl shadow-soft-lg z-50 overflow-hidden animate-fade-in">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-base-300/80 bg-base-200/60">
                   <div className="flex items-center gap-2">
