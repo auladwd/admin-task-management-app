@@ -27,20 +27,15 @@ function fmtStatus(s) {
 }
 
 /** Active filter summary string */
-function filterSummary(filters, isStaff, staffName) {
+function filterSummary(filters) {
   const parts = [];
-  if (isStaff) parts.push(`Staff: ${staffName}`);
   if (filters?.startDate) parts.push(`From: ${filters.startDate}`);
   if (filters?.endDate) parts.push(`To: ${filters.endDate}`);
   if (filters?.status && filters.status !== 'all')
     parts.push(`Status: ${fmtStatus(filters.status)}`);
   if (filters?.priority && filters.priority !== 'all')
     parts.push(`Priority: ${fmtStatus(filters.priority)}`);
-  return parts.length
-    ? parts.join('  |  ')
-    : isStaff
-      ? `All tasks for ${staffName}`
-      : 'All tasks';
+  return parts.length ? parts.join('  |  ') : 'All tasks';
 }
 
 function ReportsContent() {
@@ -133,7 +128,7 @@ function ReportsContent() {
             <div>
               <h1>Task Management Report</h1>
               <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>
-                {filterSummary(appliedFilters, staffMode, userProfile?.name)}
+                {filterSummary(appliedFilters)}
               </div>
             </div>
             <div className="print-meta">
@@ -199,7 +194,7 @@ function ReportsContent() {
                     <tr key={task._id}>
                       <td style={{ color: '#6b7280' }}>{idx + 1}</td>
                       <td style={{ fontWeight: 600 }}>{task.title}</td>
-                      {!staffMode && <td>{task.assigneeName}</td>}
+                      <td>{task.assigneeName}</td>
                       <td>
                         <span className={`print-badge badge-${task.status}`}>
                           {fmtStatus(task.status)}
@@ -240,9 +235,7 @@ function ReportsContent() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Reports</h1>
           <p className="text-base-content/70 mt-1 text-sm sm:text-base">
-            {staffMode
-              ? 'Generate and export your personal task report'
-              : 'Generate and export task reports'}
+            Generate and export task reports
           </p>
         </div>
         {/* Staff badge */}
@@ -259,13 +252,7 @@ function ReportsContent() {
         <div className="card-body p-4 sm:p-6">
           <h2 className="card-title text-base sm:text-lg">Report Filters</h2>
 
-          {/* Staff notice */}
-          {staffMode && (
-            <div className="alert alert-info py-2 px-4 text-sm">
-              <FiUser className="w-4 h-4 flex-shrink-0" />
-              <span>This report will only include tasks assigned to you.</span>
-            </div>
-          )}
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
             <div className="form-control">
@@ -359,11 +346,7 @@ function ReportsContent() {
                 </h2>
                 {appliedFilters && (
                   <p className="text-xs text-base-content/50 mt-1">
-                    {filterSummary(
-                      appliedFilters,
-                      staffMode,
-                      userProfile?.name,
-                    )}
+                    {filterSummary(appliedFilters)}
                   </p>
                 )}
               </div>
@@ -495,7 +478,7 @@ function ReportsContent() {
                         {task.description}
                       </p>
                       <div className="flex justify-between text-xs text-base-content/60">
-                        {!staffMode && <span>{task.assigneeName}</span>}
+                        <span>{task.assigneeName}</span>
                         <span>
                           {new Date(task.dueDate).toLocaleDateString()}
                         </span>
@@ -511,7 +494,7 @@ function ReportsContent() {
                       <tr>
                         <th className="w-8">#</th>
                         <th>Title</th>
-                        {!staffMode && <th>Assignee</th>}
+                        <th>Assignee</th>
                         <th>Status</th>
                         <th>Priority</th>
                         <th>Due Date</th>
@@ -527,7 +510,7 @@ function ReportsContent() {
                           <td className="font-semibold max-w-[220px] truncate">
                             {task.title}
                           </td>
-                          {!staffMode && <td>{task.assigneeName}</td>}
+                          <td>{task.assigneeName}</td>
                           <td>
                             <span
                               className={`badge badge-sm ${task.status === 'completed' ? 'badge-success' : task.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}

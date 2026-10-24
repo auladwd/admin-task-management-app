@@ -3,11 +3,14 @@
  * Centralized, rigorous evaluation engine for staff activities and leaderboard rankings.
  *
  * Scoring Formula (Total 100 Points):
- *   1. Completion Rate (40 pts max)  → (completed / assigned) * 40
- *   2. On-Time Delivery (35 pts max) → (completedOnTime / completed) * 35
- *   3. Priority & Quality (15 pts max) → Weighted score of completed priority tasks vs assigned
- *      (High = 3x, Medium = 2x, Low = 1x)
- *   4. Discipline & Punctuality (10 pts max) → 10 pts if 0 overdue; deducted proportionally if overdue tasks exist
+ *   1. Task Volume & Output (45 pts max) → (completed / maxTeamCompleted) * 45
+ *   2. Completion Rate (25 pts max)      → (completed / assigned) * 25
+ *   3. On-Time Delivery (20 pts max)     → (completedOnTime / completed) * 20
+ *   4. Discipline & Punctuality (10 pts) → 10 pts bonus minus penalty for overdue tasks
+ *
+ * Leaderboard Ranking:
+ *   - Primary: Completed Tasks count (the person who completed more tasks ranks higher)
+ *   - Tie-breakers: Score, Completion Rate, On-Time completions, Lower Overdue, Name
  *
  * If assigned === 0:
  *   Score = 0, Grade = 'No Tasks', GradeColor = 'neutral'
@@ -15,17 +18,12 @@
 
 /**
  * Returns the end-of-day cutoff for a given due date.
- * When a task due date is specified like '2026-09-18', the task is due
- * by the end of that calendar day. Timezone differences (e.g. UTC midnight being 06:00 AM local)
- * should not cause tasks completed on the same date to be flagged as late.
  */
 function getEndOfDueDate(dueDate) {
   if (!dueDate) return null;
   const d = new Date(dueDate);
   if (isNaN(d.getTime())) return null;
 
-  // Compute both UTC end-of-day and Local end-of-day, taking the latest cutoff
-  // so the employee is given the full calendar day in both UTC and local timezone.
   const utcEndOfDay = new Date(
     Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999),
   );
@@ -45,9 +43,10 @@ function getEndOfDueDate(dueDate) {
  * Calculate comprehensive performance metrics for a single user.
  * @param {object} db - MongoDB database instance
  * @param {object} user - User document { uid, name, email, role, ... }
- * @param {Date} [referenceDate] - Optional reference date for testing (defaults to new Date())
+ * @param {Date} [referenceDate] - Optional reference date
+ * @param {object} [context] - Optional context { maxTeamCompleted }
  */
-export async function calculateUserPerformance(db, user, referenceDate = new Date()) {
+export async function calculateUserPerformance(db, user, referenceDate = new Date(), context = {}) {
   const uid = user.uid;
   const now = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
 
@@ -70,10 +69,8 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const pending = tasks.filter(t => t.status === 'pending').length;
 
-  // On-time completion verification:
-  // Must be completed, must have a valid completedAt date, and completedAt <= endOfDueDate
   let completedOnTime = 0;
-  let completedEarly = 0; // Completed at least 4 hours before deadline
+  let completedEarly = 0;
   let completedLate = 0;
 
   tasks.forEach(t => {
@@ -84,7 +81,6 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
         if (!isNaN(completedDate.getTime()) && deadline) {
           if (completedDate <= deadline) {
             completedOnTime++;
-            // Check if completed more than 4 hours ahead of deadline
             if (deadline.getTime() - completedDate.getTime() >= 4 * 60 * 60 * 1000) {
               completedEarly++;
             }
@@ -92,11 +88,9 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
             completedLate++;
           }
         } else {
-          // If dates are invalid, count as completed but not on time
           completedLate++;
         }
       } else {
-        // Missing completion timestamp
         completedLate++;
       }
     }
@@ -110,13 +104,11 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     return deadline && deadline < now;
   }).length;
 
-  // Priority Breakdown (Assigned & Completed)
+  // Priority Breakdown
   const highAssigned = tasks.filter(t => t.priority === 'high').length;
   const highCompleted = tasks.filter(t => t.priority === 'high' && t.status === 'completed').length;
-
   const mediumAssigned = tasks.filter(t => t.priority === 'medium').length;
   const mediumCompleted = tasks.filter(t => t.priority === 'medium' && t.status === 'completed').length;
-
   const lowAssigned = tasks.filter(t => t.priority === 'low').length;
   const lowCompleted = tasks.filter(t => t.priority === 'low' && t.status === 'completed').length;
 
@@ -125,14 +117,27 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
   const onTimeRate = completed > 0 ? (completedOnTime / completed) * 100 : 0;
   const overdueRate = assigned > 0 ? (overdue / assigned) * 100 : 0;
 
-  // Weighted Priority Calculation (High = 3, Med = 2, Low = 1)
   const totalPriorityAssignedWeight = (highAssigned * 3) + (mediumAssigned * 2) + (lowAssigned * 1);
   const totalPriorityCompletedWeight = (highCompleted * 3) + (mediumCompleted * 2) + (lowCompleted * 1);
-
   const priorityScoreRatio = totalPriorityAssignedWeight > 0
     ? totalPriorityCompletedWeight / totalPriorityAssignedWeight
     : 0;
   const priorityCompletionRate = priorityScoreRatio * 100;
+
+  // Determine benchmark for team completed task volume
+  let maxTeamCompleted = context?.maxTeamCompleted;
+  if (typeof maxTeamCompleted !== 'number') {
+    const topAgg = await db
+      .collection('tasks')
+      .aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: '$assignee', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 1 },
+      ])
+      .toArray();
+    maxTeamCompleted = topAgg.length > 0 ? Math.max(topAgg[0].count, 1) : 1;
+  }
 
   // 100-Point Score Calculation
   let score = 0;
@@ -141,35 +146,38 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
   const insights = [];
 
   if (assigned > 0) {
-    // 1. Completion Rate (up to 40 pts)
-    const completionPts = (completionRate / 100) * 40;
+    // 1. Task Volume & Output (up to 45 pts)
+    // Directly rewards actual delivery of work relative to team benchmark
+    const volumePts = maxTeamCompleted > 0 ? (completed / maxTeamCompleted) * 45 : 0;
 
-    // 2. On-Time Delivery (up to 35 pts)
-    const onTimePts = (onTimeRate / 100) * 35;
+    // 2. Task Completion Rate (up to 25 pts)
+    // Measures personal delivery percentage on assigned tasks
+    const completionPts = (completionRate / 100) * 25;
 
-    // 3. Priority Execution (up to 15 pts)
-    const priorityPts = priorityScoreRatio * 15;
+    // 3. On-Time Delivery Rate (up to 20 pts)
+    const onTimePts = (onTimeRate / 100) * 20;
 
-    // 4. Punctuality & Discipline (up to 10 pts)
-    // Full 10 pts if 0 overdue; penalize if overdue exists
+    // 4. Discipline & Punctuality (up to 10 pts)
+    // Penalize if overdue tasks exist
     const overduePenalty = (overdueRate / 100) * 15;
     const disciplinePts = Math.max(0, 10 - overduePenalty);
 
     // Sum and clamp to [0, 100]
-    score = Math.round((completionPts + onTimePts + priorityPts + disciplinePts) * 10) / 10;
+    score = Math.round((volumePts + completionPts + onTimePts + disciplinePts) * 10) / 10;
     score = Math.max(0, Math.min(100, score));
 
-    // Grade Determination
-    if (score >= 90) {
+    // Grade Determination:
+    // Excellent requires both significant volume and high efficiency
+    if (score >= 80) {
       grade = 'Excellent';
       gradeColor = 'success';
-    } else if (score >= 75) {
+    } else if (score >= 65) {
       grade = 'Good';
       gradeColor = 'info';
-    } else if (score >= 60) {
+    } else if (score >= 50) {
       grade = 'Average';
       gradeColor = 'warning';
-    } else if (score >= 40) {
+    } else if (score >= 35) {
       grade = 'Below Average';
       gradeColor = 'warning';
     } else {
@@ -178,14 +186,16 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     }
 
     // Smart Qualitative Insights
-    if (completed === assigned && assigned > 0) {
+    if (completed >= 15) {
+      insights.push({ type: 'success', text: 'Top Volume Producer', icon: '🏆' });
+    } else if (completed >= 8) {
+      insights.push({ type: 'info', text: 'High Task Contributor', icon: '⚡' });
+    }
+    if (completed === assigned && assigned > 2) {
       insights.push({ type: 'success', text: 'All Tasks Completed', icon: '✅' });
     }
-    if (completedOnTime === completed && completed > 0) {
+    if (completedOnTime === completed && completed > 2) {
       insights.push({ type: 'success', text: '100% On-Time Record', icon: '🌟' });
-    }
-    if (highCompleted === highAssigned && highAssigned > 0) {
-      insights.push({ type: 'info', text: 'High Priority Completed', icon: '⚡' });
     }
     if (overdue > 0) {
       insights.push({
@@ -197,19 +207,20 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     if (inProgress > 0) {
       insights.push({ type: 'info', text: 'Actively Working', icon: '🔄' });
     }
+    if (completed === 1) {
+      insights.push({ type: 'neutral', text: 'Initial Task Completed', icon: '📌' });
+    }
   } else {
     insights.push({ type: 'neutral', text: 'No Tasks Assigned', icon: '📋' });
   }
 
   return {
-    // User info
     uid: user.uid,
-    userId: user.uid, // Alias for leaderboard compatibility
+    userId: user.uid,
     name: user.name || 'Unknown',
     email: user.email || '',
     role: user.role || 'staff',
 
-    // Task counts
     assigned,
     completed,
     completedOnTime,
@@ -219,7 +230,6 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     pending,
     overdue,
 
-    // Priority breakdown
     highPriority: highAssigned,
     highPriorityCompleted: highCompleted,
     mediumPriority: mediumAssigned,
@@ -227,13 +237,11 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
     lowPriority: lowAssigned,
     lowPriorityCompleted: lowCompleted,
 
-    // Rates (rounded to 1 decimal place)
     completionRate: Math.round(completionRate * 10) / 10,
     onTimeRate: Math.round(onTimeRate * 10) / 10,
     overdueRate: Math.round(overdueRate * 10) / 10,
     priorityCompletionRate: Math.round(priorityCompletionRate * 10) / 10,
 
-    // Score & Grade
     score,
     grade,
     gradeColor,
@@ -243,7 +251,8 @@ export async function calculateUserPerformance(db, user, referenceDate = new Dat
 
 /**
  * Calculate sorted leaderboard for all active staff (or filtered users).
- * Applies fair deterministic tie-breaking.
+ * Sorts primarily by completed task volume (highest volume first),
+ * followed by fair deterministic tie-breaking.
  *
  * @param {object} db - MongoDB database instance
  * @param {object} [options] - Options { roles: ['staff'], limit: 50, now: Date }
@@ -262,27 +271,65 @@ export async function calculateLeaderboard(db, options = {}) {
 
   const users = await db.collection('users').find(query).toArray();
 
+  // Find maximum completed tasks across the team for volume benchmark
+  const topAgg = await db
+    .collection('tasks')
+    .aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: '$assignee', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 1 },
+    ])
+    .toArray();
+  const maxTeamCompleted = topAgg.length > 0 ? Math.max(topAgg[0].count, 1) : 1;
+
   const performanceList = await Promise.all(
-    users.map(user => calculateUserPerformance(db, user, now)),
+    users.map(user => calculateUserPerformance(db, user, now, { maxTeamCompleted })),
   );
 
-  // Deterministic tie-breaking:
-  // 1. Score (highest first)
-  // 2. Completed tasks (higher volume)
-  // 3. Completed on time (punctuality)
-  // 4. High-priority completed
-  // 5. Lower overdue count
-  // 6. Name alphabetical
+  // Deterministic Leaderboard Ranking:
+  // 1. Users with 0 assigned tasks go to the bottom
+  // 2. Primary: Completed tasks count (যে বেশি কাজ সম্পন্ন করবে সে সবার উপরে)
+  // 3. Secondary: Higher performance score
+  // 4. Higher completion rate
+  // 5. Higher on-time delivery count
+  // 6. Fewer overdue tasks
+  // 7. Alphabetical by name
   performanceList.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (b.completed !== a.completed) return b.completed - a.completed;
-    if (b.completedOnTime !== a.completedOnTime) return b.completedOnTime - a.completedOnTime;
-    if (b.highPriorityCompleted !== a.highPriorityCompleted) return b.highPriorityCompleted - a.highPriorityCompleted;
-    if (a.overdue !== b.overdue) return a.overdue - b.overdue;
+    // Unassigned users at the bottom
+    if (a.assigned === 0 && b.assigned > 0) return 1;
+    if (b.assigned === 0 && a.assigned > 0) return -1;
+
+    // 1. Primary: Most completed tasks
+    if (b.completed !== a.completed) {
+      return b.completed - a.completed;
+    }
+
+    // 2. Secondary: Higher score
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+
+    // 3. Higher completion rate
+    if (b.completionRate !== a.completionRate) {
+      return b.completionRate - a.completionRate;
+    }
+
+    // 4. More on-time completions
+    if (b.completedOnTime !== a.completedOnTime) {
+      return b.completedOnTime - a.completedOnTime;
+    }
+
+    // 5. Fewer overdue tasks
+    if (a.overdue !== b.overdue) {
+      return a.overdue - b.overdue;
+    }
+
+    // 6. Alphabetical
     return (a.name || '').localeCompare(b.name || '');
   });
 
-  // Assign ranks
+  // Assign ranks (1, 2, 3...)
   performanceList.forEach((item, index) => {
     item.rank = index + 1;
   });

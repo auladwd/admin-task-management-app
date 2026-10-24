@@ -21,10 +21,8 @@ export async function GET(request) {
     let filter = {};
 
     // ── Role-based access control ──────────────────────────────────────
-    // Staff can ONLY see their own tasks — override any assignee param
-    if (role === 'staff' && userId) {
-      filter.assignee = userId;
-    } else if (assignee && assignee !== 'all') {
+    // Assignee filter (all users, including staff, can see all tasks or filter by assignee)
+    if (assignee && assignee !== 'all') {
       filter.assignee = assignee;
     }
 

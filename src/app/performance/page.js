@@ -414,10 +414,10 @@ function PerformanceContent() {
       if (!matchSearch) return false;
 
       if (activeTab === 'top') {
-        return user.score >= 75 && user.assigned > 0;
+        return (user.rank <= 3 || user.score >= 65) && user.assigned > 0;
       }
       if (activeTab === 'attention') {
-        return user.overdue > 0 || (user.score < 60 && user.assigned > 0);
+        return user.overdue > 0 || (user.score < 50 && user.assigned > 0);
       }
       if (activeTab === 'unassigned') {
         return user.assigned === 0;
@@ -488,6 +488,9 @@ function PerformanceContent() {
       ? data.filter(u => u.assigned > 0).reduce((s, u) => s + u.score, 0) / activeStaff
       : 0;
   const totalOverdue = data.reduce((s, u) => s + u.overdue, 0);
+  const needsAttentionCount = data.filter(
+    u => u.overdue > 0 || (u.score < 50 && u.assigned > 0),
+  ).length;
 
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-7xl">
@@ -603,7 +606,7 @@ function PerformanceContent() {
                 className={`tab tab-sm font-medium ${activeTab === 'attention' ? 'tab-active font-bold' : ''}`}
                 onClick={() => setActiveTab('attention')}
               >
-                Needs Attention {totalOverdue > 0 && `(${totalOverdue})`}
+                Needs Attention {needsAttentionCount > 0 && `(${needsAttentionCount})`}
               </button>
               <button
                 className={`tab tab-sm font-medium ${activeTab === 'unassigned' ? 'tab-active font-bold' : ''}`}
@@ -750,21 +753,21 @@ function PerformanceContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
-                weight: '40%',
-                label: 'Task Completion Rate',
-                desc: 'Ratio of completed tasks to assigned tasks',
+                weight: '45%',
+                label: 'Task Volume & Output',
+                desc: 'Completed tasks count relative to top team benchmark',
                 color: 'badge-primary',
               },
               {
-                weight: '35%',
-                label: 'On-Time Delivery Rate',
-                desc: 'Ratio of tasks completed on or before deadline',
+                weight: '25%',
+                label: 'Task Completion Rate',
+                desc: 'Ratio of completed tasks to assigned tasks',
                 color: 'badge-success',
               },
               {
-                weight: '15%',
-                label: 'Priority & Complexity',
-                desc: 'Weighted score of completed High (3x) and Medium (2x) priority tasks',
+                weight: '20%',
+                label: 'On-Time Delivery Rate',
+                desc: 'Ratio of tasks completed on or before deadline',
                 color: 'badge-info',
               },
               {
@@ -787,14 +790,14 @@ function PerformanceContent() {
           <div className="mt-4 p-3.5 bg-base-200/70 rounded-xl text-xs text-base-content/70 flex flex-wrap gap-x-4 gap-y-2 justify-between items-center">
             <div>
               <strong>Grading Scale:</strong>&nbsp; 
-              <span className="text-success font-semibold">≥90 = Excellent</span> &nbsp;|&nbsp; 
-              <span className="text-info font-semibold">≥75 = Good</span> &nbsp;|&nbsp; 
-              <span className="text-warning font-semibold">≥60 = Average</span> &nbsp;|&nbsp; 
-              <span className="text-warning font-semibold">≥40 = Below Average</span> &nbsp;|&nbsp; 
-              <span className="text-error font-semibold">&lt;40 = Needs Improvement</span>
+              <span className="text-success font-semibold">≥80 = Excellent</span> &nbsp;|&nbsp; 
+              <span className="text-info font-semibold">≥65 = Good</span> &nbsp;|&nbsp; 
+              <span className="text-warning font-semibold">≥50 = Average</span> &nbsp;|&nbsp; 
+              <span className="text-warning font-semibold">≥35 = Below Average</span> &nbsp;|&nbsp; 
+              <span className="text-error font-semibold">&lt;35 = Needs Improvement</span>
             </div>
             <div className="text-[11px] text-base-content/50">
-              *Ties are broken automatically based on completed task volume and high-priority completions.
+              *Leaderboard ranks primarily by most completed tasks, followed by score, completion rate, and timeliness.
             </div>
           </div>
         </div>

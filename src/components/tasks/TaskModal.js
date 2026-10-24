@@ -97,7 +97,7 @@ export default function TaskModal({
         fetch(
           `/api/upload?publicId=${encodeURIComponent(targetAtt.publicId)}`,
           { method: 'DELETE' }
-        ).catch(() => {});
+        ).catch(() => { });
       } catch (e) {
         // silent catch
       }
@@ -372,8 +372,8 @@ export default function TaskModal({
                             {isImg
                               ? 'Image'
                               : isPdf
-                              ? 'PDF Document'
-                              : 'File Link'}
+                                ? 'PDF Document'
+                                : 'File Link'}
                           </span>
                         </div>
 

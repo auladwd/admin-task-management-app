@@ -23,13 +23,8 @@ export async function GET(request) {
     // Build filter based on role and parameters
     let filter = {};
 
-    // Role-based filtering - staff can only see their own tasks
-    if (role === 'staff' && userId) {
-      filter.assignee = userId;
-    }
-
-    // Assignee filter (for team_leader and super_admin)
-    if (assignee && assignee !== 'all' && role !== 'staff') {
+    // Assignee filter (all users, including staff, can view all tasks or filter by assignee)
+    if (assignee && assignee !== 'all') {
       filter.assignee = assignee;
     }
 

@@ -62,9 +62,9 @@ export default function Leaderboard({ data, loading = false }) {
 
   const getScoreColor = (score, assigned) => {
     if (assigned === 0) return 'text-base-content/40';
-    if (score >= 90) return 'text-success';
-    if (score >= 75) return 'text-info';
-    if (score >= 60) return 'text-warning';
+    if (score >= 80) return 'text-success';
+    if (score >= 65) return 'text-info';
+    if (score >= 50) return 'text-warning';
     return 'text-error';
   };
 

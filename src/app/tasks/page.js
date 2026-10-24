@@ -96,10 +96,10 @@ function TasksContent() {
       }
     };
 
-    if (canManageTasks()) {
+    if (userProfile) {
       fetchStaffUsers();
     }
-  }, [canManageTasks]);
+  }, [userProfile]);
 
   const handleCreateTask = () => {
     setSelectedTask(null);
@@ -160,7 +160,7 @@ function TasksContent() {
           <p className="text-xs sm:text-sm text-base-content/70 mt-1">
             {canManageTasks()
               ? 'Manage and assign tasks to team members'
-              : 'View and update your assigned tasks'}
+              : 'View and track all team tasks'}
           </p>
         </div>
 
@@ -211,7 +211,7 @@ function TasksContent() {
         filters={filters}
         onFilterChange={setFilters}
         staffUsers={staffUsers}
-        showAssigneeFilter={canManageTasks()}
+        showAssigneeFilter={true}
       />
 
       {/* Task Table */}

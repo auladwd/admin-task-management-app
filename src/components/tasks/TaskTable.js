@@ -57,7 +57,7 @@ export default function TaskTable({
         <p className="text-xs sm:text-sm text-base-content/50 max-w-sm mx-auto">
           {canEdit
             ? 'Create a new task to assign workloads and begin tracking progress.'
-            : 'You currently have no tasks matching the selected filters.'}
+            : 'No tasks found matching the selected filters.'}
         </p>
       </div>
     );
